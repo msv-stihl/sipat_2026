@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SIPAT MANSERV 2026 • Missão Segurança Total</title>
+  <meta name="description" content="Website gamificado da SIPAT Manserv 2026 com 6 jogos educativos de segurança do trabalho totalizando 1000 pontos." />
+  <meta name="theme-color" content="#FF460A" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Canvas Confetti -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-section">
+        <div class="brand-logo-badge">MANSERV</div>
+        <div class="brand-titles">
+          <span class="brand-title">SIPAT <span class="year-tag">2026</span></span>
+          <span class="brand-subtitle">Segurança & Prevenção</span>
+        </div>
+      </div>
+
+      <!-- Center Score Indicator -->
+      <div class="header-score-indicator">
+        <div class="header-score-meta">
+          <span>Pontuação Total:</span>
+          <strong class="score-badge-val" id="header-total-score">0 / 1000</strong>
+        </div>
+        <div class="header-progress-track">
+          <div class="header-progress-fill" id="header-score-progress-bar"></div>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <button type="button" class="btn-icon" id="btn-toggle-sound" title="Alternar Sons">
+          🔊
+        </button>
+
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-header-leaderboard" title="Ver Ranking de Colaboradores">
+          🏆 Ranking
+        </button>
+
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-header-admin" title="Painel Organizador Manserv">
+          ⚙️ Admin
+        </button>
+
+        <!-- Player Profile Pill -->
+        <div class="user-profile-pill" id="btn-edit-profile" title="Clique para editar seu perfil">
+          <div class="user-avatar-circle">👤</div>
+          <div class="user-info-text">
+            <span class="user-name" id="profile-display-name">Colaborador</span>
+            <span class="user-email-dim" id="profile-display-email">Informe o e-mail</span>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-sm btn-highlight" id="btn-header-submit">
+          Salvar Pontuação 🚀
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-wrapper">
+    <!-- VIEW 1: GAME HUB -->
+    <section id="hub-view">
+      <!-- Hero Banner -->
+      <div class="hub-hero">
+        <div class="hero-content">
+          <span class="hero-pill-tag">SEMANA INTERNA DE PREVENÇÃO DE ACIDENTES</span>
+          <h1 class="hero-title">Missão Segurança Total: <span>1.000 Pontos</span></h1>
+          <p class="hero-subtitle">
+            Participe dos 6 desafios interativos da Manserv. Jogue os níveis na ordem que preferir e envie sua pontuação para o banco de dados a qualquer momento!
+          </p>
+          <div class="hero-highlights-row">
+            <div class="hero-highlight-item">🎯 <strong>6 Níveis</strong> Educativos</div>
+            <div class="hero-highlight-item">⭐ <strong>1.000 pts</strong> Pontuação Máxima</div>
+            <div class="hero-highlight-item">🔀 <strong>Ordem Livre</strong> de Jogos</div>
+            <div class="hero-highlight-item">📊 <strong>Envio Flexível</strong> a Seu Critério</div>
+          </div>
+        </div>
+
+        <div class="hero-cta-box">
+          <div class="points-reward-tag" style="margin: 0; font-size: 1rem;">
+            Progresso: <span id="header-completed-badge">0 de 6 Jogos</span>
+          </div>
+          <button type="button" class="btn btn-primary btn-highlight" onclick="window.app?.openSubmitModal()" style="width: 100%;">
+            Enviar Minha Pontuação Atual
+          </button>
+        </div>
+      </div>
+
+      <!-- Section Title -->
+      <div class="section-header">
+        <div>
+          <h2>🎮 Escolha um Desafio para Jogar</h2>
+          <p class="section-subtitle">Você pode jogar em qualquer sequência e refazer níveis para maximizar seus pontos.</p>
+        </div>
+      </div>
+
+      <!-- 6 Games Grid -->
+      <div class="games-grid">
+        <!-- Card 1: Caça-Palavras -->
+        <article class="game-card" data-level="level1">
+          <div class="card-top-row">
+            <span class="level-tag">NÍVEL 1</span>
+            <span class="card-difficulty-pill diff-easy">Fácil</span>
+          </div>
+          <div class="card-main-info">
+            <div class="card-icon-title">
+              <div class="card-game-icon">🔍</div>
+              <h3 class="card-title">Caça-Palavras</h3>
+            </div>
+            <p class="card-desc">
+              Localize 6 conceitos essenciais da cultura de prevenção Manserv escondidos no diagrama.
+            </p>
+          </div>
+          <div class="card-stats-box">
+            <div class="card-stats-header">
+              <span>Pontos Conquistados:</span>
+              <span class="card-score-value">0 / 100 pts</span>
+            </div>
+            <div class="card-progress-bar-track">
+              <div class="card-progress-bar-fill"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="card-status-pill status-pending">Disponível</span>
+            <button type="button" class="btn btn-primary btn-sm btn-card-action">Jogar Agora ▶</button>
+          </div>
+        </article>
+
+        <!-- Card 2: Forca -->
+        <article class="game-card" data-level="level2">
+          <div class="card-top-row">
+            <span class="level-tag">NÍVEL 2</span>
+            <span class="card-difficulty-pill diff-medium">Fácil / Médio</span>
+          </div>
+          <div class="card-main-info">
+            <div class="card-icon-title">
+              <div class="card-game-icon">🪢</div>
+              <h3 class="card-title">Jogo da Forca</h3>
+            </div>
+            <p class="card-desc">
+              Adivinhe 3 expressões operacionais e siglas fundamentais da SIPAT antes de esgotar as chances.
+            </p>
+          </div>
+          <div class="card-stats-box">
+            <div class="card-stats-header">
+              <span>Pontos Conquistados:</span>
+              <span class="card-score-value">0 / 120 pts</span>
+            </div>
+            <div class="card-progress-bar-track">
+              <div class="card-progress-bar-fill"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="card-status-pill status-pending">Disponível</span>
+            <button type="button" class="btn btn-primary btn-sm btn-card-action">Jogar Agora ▶</button>
+          </div>
+        </article>
+
+        <!-- Card 3: Questionário -->
+        <article class="game-card" data-level="level3">
+          <div class="card-top-row">
+            <span class="level-tag">NÍVEL 3</span>
+            <span class="card-difficulty-pill diff-medium">Médio (Meta: 4/5)</span>
+          </div>
+          <div class="card-main-info">
+            <div class="card-icon-title">
+              <div class="card-game-icon">📝</div>
+              <h3 class="card-title">Questionário</h3>
+            </div>
+            <p class="card-desc">
+              Responda a 5 questões sobre comportamento seguro. Acerte pelo menos 4 para ser aprovado!
+            </p>
+          </div>
+          <div class="card-stats-box">
+            <div class="card-stats-header">
+              <span>Pontos Conquistados:</span>
+              <span class="card-score-value">0 / 150 pts</span>
+            </div>
+            <div class="card-progress-bar-track">
+              <div class="card-progress-bar-fill"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="card-status-pill status-pending">Disponível</span>
+            <button type="button" class="btn btn-primary btn-sm btn-card-action">Jogar Agora ▶</button>
+          </div>
+        </article>
+
+        <!-- Card 4: Tomada de Decisão -->
+        <article class="game-card" data-level="level4">
+          <div class="card-top-row">
+            <span class="level-tag">NÍVEL 4</span>
+            <span class="card-difficulty-pill diff-hard">Médio / Avançado</span>
+          </div>
+          <div class="card-main-info">
+            <div class="card-icon-title">
+              <div class="card-game-icon">⚖️</div>
+              <h3 class="card-title">Tomada de Decisão</h3>
+            </div>
+            <p class="card-desc">
+              Analise 3 dilemas reais do chão de fábrica e tome a atitude mais segura para você e sua equipe.
+            </p>
+          </div>
+          <div class="card-stats-box">
+            <div class="card-stats-header">
+              <span>Pontos Conquistados:</span>
+              <span class="card-score-value">0 / 180 pts</span>
+            </div>
+            <div class="card-progress-bar-track">
+              <div class="card-progress-bar-fill"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="card-status-pill status-pending">Disponível</span>
+            <button type="button" class="btn btn-primary btn-sm btn-card-action">Jogar Agora ▶</button>
+          </div>
+        </article>
+
+        <!-- Card 5: Encontre os Riscos -->
+        <article class="game-card" data-level="level5">
+          <div class="card-top-row">
+            <span class="level-tag">NÍVEL 5</span>
+            <span class="card-difficulty-pill diff-hard">Difícil (Toque Celular)</span>
+          </div>
+          <div class="card-main-info">
+            <div class="card-icon-title">
+              <div class="card-game-icon">⚠️</div>
+              <h3 class="card-title">Encontre os Riscos</h3>
+            </div>
+            <p class="card-desc">
+              Toque na tela para encontrar 5 perigos em um cenário industrial. Você tem exatamente 8 chances!
+            </p>
+          </div>
+          <div class="card-stats-box">
+            <div class="card-stats-header">
+              <span>Pontos Conquistados:</span>
+              <span class="card-score-value">0 / 220 pts</span>
+            </div>
+            <div class="card-progress-bar-track">
+              <div class="card-progress-bar-fill"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="card-status-pill status-pending">Disponível</span>
+            <button type="button" class="btn btn-primary btn-sm btn-card-action">Jogar Agora ▶</button>
+          </div>
+        </article>
+
+        <!-- Card 6: Cruzadinha -->
+        <article class="game-card" data-level="level6">
+          <div class="card-top-row">
+            <span class="level-tag">NÍVEL 6</span>
+            <span class="card-difficulty-pill diff-very-hard">Muito Difícil</span>
+          </div>
+          <div class="card-main-info">
+            <div class="card-icon-title">
+              <div class="card-game-icon">🧩</div>
+              <h3 class="card-title">Cruzadinha SIPAT</h3>
+            </div>
+            <p class="card-desc">
+              Decifre 7 conceitos aprofundados de NRs, ergonomia e auditoria no diagrama de palavras cruzadas.
+            </p>
+          </div>
+          <div class="card-stats-box">
+            <div class="card-stats-header">
+              <span>Pontos Conquistados:</span>
+              <span class="card-score-value">0 / 230 pts</span>
+            </div>
+            <div class="card-progress-bar-track">
+              <div class="card-progress-bar-fill"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="card-status-pill status-pending">Disponível</span>
+            <button type="button" class="btn btn-primary btn-sm btn-card-action">Jogar Agora ▶</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- VIEW 2: ACTIVE GAME SCREEN -->
+    <section id="game-screen-view" class="hidden">
+      <div class="game-screen-wrapper">
+        <div class="game-screen-nav-bar">
+          <button type="button" class="btn btn-secondary" id="btn-return-hub">
+            ← Voltar ao Menu de Jogos
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.app?.openSubmitModal()">
+            Salvar Progresso Atual 🚀
+          </button>
+        </div>
+
+        <!-- Injected Game Container -->
+        <div id="active-game-container"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky Bottom Bar on Mobile -->
+  <div class="mobile-bottom-bar">
+    <div>
+      <small style="color: var(--color-text-dim); display: block;">Sua Pontuação:</small>
+      <strong id="mobile-total-score" class="text-orange" style="font-size: 1.15rem;">0 pts</strong>
+    </div>
+    <button type="button" class="btn btn-primary btn-sm" id="btn-mobile-submit">
+      Finalizar e Enviar 🚀
+    </button>
+  </div>
+
+  <!-- ==========================================================================
+       MODALS
+       ========================================================================== -->
+
+  <!-- 1. Registration Modal -->
+  <dialog id="registration-modal">
+    <div class="modal-content-box">
+      <div class="modal-header">
+        <h3>📋 Identificação do Colaborador</h3>
+      </div>
+      <p style="color: var(--color-text-dim); margin-bottom: 20px; font-size: 0.9rem;">
+        Informe seu e-mail corporativo para vincular seus 1.000 pontos no banco de dados da SIPAT Manserv 2026.
+      </p>
+
+      <form id="registration-form">
+        <div class="form-group">
+          <label for="reg-email">E-mail Corporativo *</label>
+          <input type="email" id="reg-email" class="form-input" placeholder="ex: colaborador@manserv.com.br" required />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-name">Nome Completo</label>
+          <input type="text" id="reg-name" class="form-input" placeholder="ex: Wesley Silva" />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-sector">Unidade / Setor / Contrato</label>
+          <input type="text" id="reg-sector" class="form-input" placeholder="ex: Manutenção Industrial - Unidade Tubarão" />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="reg-btn-cancel" style="display: none;">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Iniciar Missão SIPAT ▶</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- 2. Submit Results Modal -->
+  <dialog id="submit-results-modal">
+    <div class="modal-content-box">
+      <div class="modal-header">
+        <h3>📊 Resumo e Envio da Pontuação</h3>
+        <button type="button" class="modal-close-btn" onclick="document.getElementById('submit-results-modal')?.close()">✕</button>
+      </div>
+
+      <div style="background: var(--color-surface-alt); padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 18px; border: 1px solid var(--color-border);">
+        <p><strong>Colaborador:</strong> <span id="summary-name">Wesley</span> (<span id="summary-email">email</span>)</p>
+        <p><strong>Setor:</strong> <span id="summary-sector">Geral</span></p>
+        <p style="margin-top: 6px;">
+          <strong>Pontuação Total:</strong> <strong id="summary-total-score" class="text-orange" style="font-size: 1.15rem;">0 / 1000 pontos</strong>
+          &nbsp;•&nbsp; <span id="summary-games-done">0 de 6 Jogos Realizados</span>
+        </p>
+      </div>
+
+      <table class="styled-table">
+        <thead>
+          <tr>
+            <th>Jogo / Nível</th>
+            <th>Status</th>
+            <th class="text-right">Pontos</th>
+          </tr>
+        </thead>
+        <tbody id="summary-breakdown-tbody"></tbody>
+      </table>
+
+      <div id="submit-notice-text" style="background: rgba(255, 70, 10, 0.1); border: 1px solid rgba(255, 70, 10, 0.3); padding: 12px; border-radius: var(--radius-sm); font-size: 0.85rem; margin: 15px 0;"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('submit-results-modal')?.close()">Continuar Jogando</button>
+        <button type="button" class="btn btn-primary btn-highlight" id="btn-confirm-final-send">
+          Confirmar Envio para o Banco de Dados 🚀
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 3. Leaderboard Modal -->
+  <dialog id="leaderboard-modal">
+    <div class="modal-content-box">
+      <div class="modal-header">
+        <h3>🏆 Ranking de Colaboradores SIPAT 2026</h3>
+        <button type="button" class="modal-close-btn" onclick="document.getElementById('leaderboard-modal')?.close()">✕</button>
+      </div>
+      <p style="color: var(--color-text-dim); font-size: 0.88rem; margin-bottom: 15px;">
+        Classificação atualizada em tempo real conforme as pontuações registradas no banco de dados.
+      </p>
+
+      <div style="overflow-x: auto;">
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Pos.</th>
+              <th>Colaborador</th>
+              <th>Setor</th>
+              <th>Jogos</th>
+              <th class="text-right">Pontos</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('leaderboard-modal')?.close()">Fechar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 4. Admin Modal -->
+  <dialog id="admin-modal">
+    <div class="modal-content-box" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3>⚙️ Painel Organizador Manserv SIPAT</h3>
+        <button type="button" class="modal-close-btn" onclick="document.getElementById('admin-modal')?.close()">✕</button>
+      </div>
+
+      <!-- Metrics -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px;">
+        <div style="background: var(--color-surface-alt); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); text-align: center;">
+          <small style="color: var(--color-text-dim);">Participantes:</small>
+          <h4 id="admin-total-players" style="font-size: 1.6rem; color: var(--color-primary);">0</h4>
+        </div>
+        <div style="background: var(--color-surface-alt); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); text-align: center;">
+          <small style="color: var(--color-text-dim);">Pontuação Média:</small>
+          <h4 id="admin-avg-score" style="font-size: 1.6rem; color: var(--color-white);">0 pts</h4>
+        </div>
+        <div style="background: var(--color-surface-alt); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--color-border); text-align: center;">
+          <small style="color: var(--color-text-dim);">Conclusão Total (6 Jogos):</small>
+          <h4 id="admin-completion-rate" style="font-size: 1.6rem; color: var(--color-success);">0%</h4>
+        </div>
+      </div>
+
+      <!-- Export CSV -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h4>Submissões Registradas:</h4>
+        <a href="/api/export-csv" class="btn btn-primary btn-sm" download>
+          📥 Exportar para Excel/CSV
+        </a>
+      </div>
+
+      <div style="max-height: 260px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin-bottom: 20px;">
+        <table class="styled-table" style="margin: 0;">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Setor</th>
+              <th>Jogos</th>
+              <th>Pontos</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody id="admin-players-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Webhook Forwarding Config -->
+      <div style="background: var(--color-surface-alt); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+        <h4 style="font-size: 0.95rem; margin-bottom: 6px;">Integração Webhook (Google Sheets / Power Automate)</h4>
+        <p style="font-size: 0.8rem; color: var(--color-text-dim); margin-bottom: 12px;">
+          Insira uma URL de Webhook para receber automaticamente todas as pontuações na sua planilha ou sistema de RH/Segurança:
+        </p>
+        <form id="admin-webhook-form" style="display: flex; gap: 10px;">
+          <input type="url" id="admin-webhook-url" class="form-input" placeholder="https://script.google.com/macros/s/.../exec" style="flex: 1;" />
+          <button type="submit" class="btn btn-secondary btn-sm">Salvar Webhook</button>
+        </form>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('admin-modal')?.close()">Fechar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 5. Certificate Modal -->
+  <dialog id="certificate-modal">
+    <div class="modal-content-box" style="text-align: center;">
+      <div class="certificate-preview-box">
+        <div class="cert-manserv-header">MANSERV</div>
+        <div class="cert-sub">CERTIFICADO DE PARTICIPAÇÃO • SIPAT 2026</div>
+        <p style="font-size: 0.95rem; color: #444;">Certificamos que o colaborador</p>
+        <h3 class="cert-main-name" id="cert-player-name">Wesley Manserv</h3>
+        <p style="font-size: 0.9rem; color: #555;">do setor <strong id="cert-player-sector">Manutenção</strong></p>
+        <p style="font-size: 0.9rem; color: #555; margin-top: 10px;">
+          completou os desafios de conscientização sobre segurança e saúde ocupacional, totalizando:
+        </p>
+        <div class="cert-points-badge" id="cert-score">1000 PONTOS</div>
+        <p style="font-size: 0.8rem; color: #777; margin-top: 10px;">
+          Data de Emissão: <span id="cert-date">14/10/2026</span> • Manserv EHS & Gestão de Pessoas
+        </p>
+      </div>
+
+      <div class="modal-actions" style="justify-content: center;">
+        <button type="button" class="btn btn-secondary" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('certificate-modal')?.close(); window.app?.showHub();">
+          Voltar ao Hub de Jogos
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/confetti.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/games/wordSearch.js"></script>
+  <script src="js/games/hangman.js"></script>
+  <script src="js/games/quiz.js"></script>
+  <script src="js/games/decision.js"></script>
+  <script src="js/games/hazardHunter.js"></script>
+  <script src="js/games/crossword.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

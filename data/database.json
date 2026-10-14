@@ -1,0 +1,44 @@
+[
+  {
+    "id": "manserv_1792000924265_18oxx",
+    "email": "wesley@manserv.com.br",
+    "name": "Wesley Manserv",
+    "sector": "Manutencao Operacional",
+    "scores": {
+      "level1": 100,
+      "level2": 120,
+      "level3": 150,
+      "level4": 180,
+      "level5": 220,
+      "level6": 230
+    },
+    "totalScore": 1000,
+    "maxPossible": 1000,
+    "completedCount": 6,
+    "status": "completed",
+    "submittedAt": "2026-10-14T18:02:04.265Z",
+    "firstPlayedAt": "2026-10-14T18:02:04.265Z",
+    "userAgent": "node"
+  },
+  {
+    "id": "manserv_1792001350195_rb5i2",
+    "email": "wesleydlbrito@gmail.com",
+    "name": "Wesley da Luz Brito",
+    "sector": "UT Stihl",
+    "scores": {
+      "level1": 100,
+      "level2": 120,
+      "level3": 150,
+      "level4": 180,
+      "level5": 220,
+      "level6": 230
+    },
+    "totalScore": 1000,
+    "maxPossible": 1000,
+    "completedCount": 6,
+    "status": "completed",
+    "submittedAt": "2026-10-14T18:27:13.451Z",
+    "firstPlayedAt": "2026-10-14T18:09:10.195Z",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+  }
+]
