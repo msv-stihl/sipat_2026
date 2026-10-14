@@ -220,9 +220,7 @@ app.get('/api/export-csv', (req, res) => {
   const db = readDb();
   const headers = [
     'ID',
-    'Nome',
     'RE',
-    'Setor/Unidade',
     'Nivel_1_Caca_Palavras',
     'Nivel_2_Forca',
     'Nivel_3_Questionario',
@@ -237,9 +235,7 @@ app.get('/api/export-csv', (req, res) => {
 
   const rows = db.map(p => [
     `"${p.id || ''}"`,
-    `"${(p.name || '').replace(/"/g, '""')}"`,
     `"${p.re || p.email || ''}"`,
-    `"${(p.sector || '').replace(/"/g, '""')}"`,
     p.scores?.level1 || 0,
     p.scores?.level2 || 0,
     p.scores?.level3 || 0,

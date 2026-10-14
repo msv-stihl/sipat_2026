@@ -111,12 +111,7 @@ class SipatApp {
     if (!modal) return;
 
     const reInput = document.getElementById('reg-re');
-    const nameInput = document.getElementById('reg-name');
-    const sectorInput = document.getElementById('reg-sector');
-
-    if (reInput) reInput.value = window.gameState?.player.re || window.gameState?.player.email || '';
-    if (nameInput) nameInput.value = window.gameState?.player.name || '';
-    if (sectorInput) sectorInput.value = window.gameState?.player.sector || '';
+    if (reInput) reInput.value = window.gameState?.player.re || '';
 
     const cancelBtn = document.getElementById('reg-btn-cancel');
     if (cancelBtn) {
@@ -129,15 +124,13 @@ class SipatApp {
 
   async handleRegistrationSubmit() {
     const re = document.getElementById('reg-re')?.value.trim();
-    const name = document.getElementById('reg-name')?.value.trim();
-    const sector = document.getElementById('reg-sector')?.value.trim();
 
     if (!re) {
       alert('Por favor, informe seu RE para registrar seus pontos.');
       return;
     }
 
-    window.gameState?.setPlayer(re, name, sector);
+    window.gameState?.setPlayer(re);
 
     // Check if player already had saved progress in database
     await window.gameState?.checkExistingPlayer(re);
@@ -154,8 +147,8 @@ class SipatApp {
     const reEl = document.getElementById('profile-display-re');
 
     const id = player?.re || player?.email;
-    if (nameEl) nameEl.textContent = player?.name || (id ? `RE: ${id}` : 'Colaborador');
-    if (reEl) reEl.textContent = id ? `RE: ${id}` : 'Informe seu RE';
+    if (nameEl) nameEl.textContent = id ? `RE: ${id}` : 'Identificação';
+    if (reEl) reEl.textContent = id ? 'Colaborador Manserv' : 'Informe seu RE';
   }
 
   updateHubUI() {
@@ -288,11 +281,14 @@ class SipatApp {
     const total = window.gameState?.getTotalScore();
     const completedCount = window.gameState?.getCompletedCount();
 
-    document.getElementById('summary-re').textContent = player?.re || player?.email || 'Não informado';
-    document.getElementById('summary-name').textContent = player?.name || 'Colaborador';
-    document.getElementById('summary-sector').textContent = player?.sector || 'Geral';
-    document.getElementById('summary-total-score').textContent = `${total} / 1000 pontos`;
-    document.getElementById('summary-games-done').textContent = `${completedCount} de 6 Jogos Realizados`;
+    const summaryRe = document.getElementById('summary-re');
+    if (summaryRe) summaryRe.textContent = player?.re || player?.email || 'Não informado';
+
+    const summaryScore = document.getElementById('summary-total-score');
+    if (summaryScore) summaryScore.textContent = `${total} / 1000 pontos`;
+
+    const summaryGames = document.getElementById('summary-games-done');
+    if (summaryGames) summaryGames.textContent = `${completedCount} de 6 Jogos Realizados`;
 
     const levelRows = [
       { key: 'level1', name: 'Nível 1 – Caça-Palavras', max: maxPoints.level1 },
@@ -361,10 +357,14 @@ class SipatApp {
     const total = window.gameState?.getTotalScore();
     const id = player?.re || player?.email;
 
-    document.getElementById('cert-player-name').textContent = player?.name || (id ? `RE: ${id}` : 'Colaborador');
-    document.getElementById('cert-player-sector').textContent = player?.sector || 'Manserv Industrial';
-    document.getElementById('cert-score').textContent = `${total} PONTOS`;
-    document.getElementById('cert-date').textContent = new Date().toLocaleDateString('pt-BR');
+    const certName = document.getElementById('cert-player-name');
+    if (certName) certName.textContent = id ? `RE: ${id}` : 'Colaborador Manserv';
+
+    const certScore = document.getElementById('cert-score');
+    if (certScore) certScore.textContent = `${total} PONTOS`;
+
+    const certDate = document.getElementById('cert-date');
+    if (certDate) certDate.textContent = new Date().toLocaleDateString('pt-BR');
 
     modal.showModal();
   }
@@ -378,7 +378,7 @@ class SipatApp {
 
     const tbody = document.getElementById('leaderboard-tbody');
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">Carregando ranking...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Carregando ranking...</td></tr>`;
     }
 
     try {
@@ -386,7 +386,7 @@ class SipatApp {
       const data = await res.json();
 
       if (!data || data.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">Nenhum colaborador registrado ainda. Seja o primeiro!</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Nenhum colaborador registrado ainda. Seja o primeiro!</td></tr>`;
         return;
       }
 
@@ -404,8 +404,7 @@ class SipatApp {
           return `
             <tr class="${isCurrent ? 'current-player-row' : ''}">
               <td><strong>${rankBadge}</strong></td>
-              <td>${item.name || 'Colaborador'} <small style="color:var(--color-primary); font-weight:700;">(RE: ${item.re || '-'})</small> ${isCurrent ? '<span class="you-badge">(Você)</span>' : ''}</td>
-              <td>${item.sector || '-'}</td>
+              <td><strong>RE: ${item.re || item.email || '-'}</strong> ${isCurrent ? '<span class="you-badge">(Você)</span>' : ''}</td>
               <td>${item.completedCount}/6</td>
               <td class="text-right"><strong class="text-orange">${item.totalScore} pts</strong></td>
             </tr>
@@ -424,15 +423,14 @@ class SipatApp {
           return `
             <tr class="${isCurrent ? 'current-player-row' : ''}">
               <td><strong>${idx + 1}º</strong></td>
-              <td>${item.name || 'Colaborador'} <small style="color:var(--color-primary); font-weight:700;">(RE: ${item.re || '-'})</small> ${isCurrent ? '<span class="you-badge">(Você)</span>' : ''}</td>
-              <td>${item.sector || '-'}</td>
+              <td><strong>RE: ${item.re || item.email || '-'}</strong> ${isCurrent ? '<span class="you-badge">(Você)</span>' : ''}</td>
               <td>${item.completedCount || 0}/6</td>
               <td class="text-right"><strong class="text-orange">${item.totalScore || 0} pts</strong></td>
             </tr>
           `;
         }).join('');
       } else if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">Você é o primeiro participante! Complete um jogo para registrar sua pontuação.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Você é o primeiro participante! Complete um jogo para registrar sua pontuação.</td></tr>`;
       }
     }
   }
@@ -461,17 +459,14 @@ class SipatApp {
   exportClientCsv() {
     const history = JSON.parse(localStorage.getItem('sipat_history') || '[]');
     const headers = [
-      'ID', 'Nome', 'RE', 'Setor/Unidade',
+      'RE',
       'Nivel_1_Caca_Palavras', 'Nivel_2_Forca', 'Nivel_3_Questionario',
       'Nivel_4_Tomada_Decisao', 'Nivel_5_Encontre_Riscos', 'Nivel_6_Cruzadinha',
       'Pontuacao_Total', 'Jogos_Concluidos', 'Status', 'Data_Envio'
     ];
 
     const rows = history.map(p => [
-      `"${p.id || 'local_' + p.re}"`,
-      `"${(p.name || '').replace(/"/g, '""')}"`,
       `"${p.re || p.email || ''}"`,
-      `"${(p.sector || '').replace(/"/g, '""')}"`,
       p.scores?.level1 || 0,
       p.scores?.level2 || 0,
       p.scores?.level3 || 0,
@@ -512,11 +507,9 @@ class SipatApp {
         if (tbody) {
           tbody.innerHTML = (data.players || []).map(p => `
             <tr>
-              <td><strong>${p.name || '-'}</strong></td>
-              <td><strong>${p.re || p.email || '-'}</strong></td>
-              <td>${p.sector || '-'}</td>
+              <td><strong>RE: ${p.re || p.email || '-'}</strong></td>
               <td>${p.completedCount}/6</td>
-              <td><strong>${p.totalScore} pts</strong></td>
+              <td><strong class="text-orange">${p.totalScore} pts</strong></td>
               <td><small>${new Date(p.submittedAt).toLocaleString('pt-BR')}</small></td>
             </tr>
           `).join('');
@@ -541,11 +534,9 @@ class SipatApp {
       if (tbody) {
         tbody.innerHTML = history.map(p => `
           <tr>
-            <td><strong>${p.name || '-'}</strong></td>
-            <td><strong>${p.re || p.email || '-'}</strong></td>
-            <td>${p.sector || '-'}</td>
+            <td><strong>RE: ${p.re || p.email || '-'}</strong></td>
             <td>${p.completedCount || 0}/6</td>
-            <td><strong>${p.totalScore || 0} pts</strong></td>
+            <td><strong class="text-orange">${p.totalScore || 0} pts</strong></td>
             <td><small>${new Date(p.submittedAt || Date.now()).toLocaleString('pt-BR')}</small></td>
           </tr>
         `).join('');

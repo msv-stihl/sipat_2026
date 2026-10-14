@@ -339,17 +339,7 @@
       <form id="registration-form">
         <div class="form-group">
           <label for="reg-re">RE (Registro do Empregado - 6 dígitos) *</label>
-          <input type="text" id="reg-re" class="form-input" placeholder="ex: 123456" maxlength="6" inputmode="numeric" required />
-        </div>
-
-        <div class="form-group">
-          <label for="reg-name">Nome Completo</label>
-          <input type="text" id="reg-name" class="form-input" placeholder="ex: Wesley Silva" />
-        </div>
-
-        <div class="form-group">
-          <label for="reg-sector">Unidade / Setor / Contrato</label>
-          <input type="text" id="reg-sector" class="form-input" placeholder="ex: Manutenção Industrial - Unidade Tubarão" />
+          <input type="text" id="reg-re" class="form-input" placeholder="ex: 123456" maxlength="6" inputmode="numeric" autofocus required />
         </div>
 
         <div class="modal-actions">
@@ -369,8 +359,7 @@
       </div>
 
       <div style="background: var(--color-surface-alt); padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 18px; border: 1px solid var(--color-border);">
-        <p><strong>Colaborador:</strong> <span id="summary-name">Wesley</span> (<strong class="text-orange">RE: <span id="summary-re">-</span></strong>)</p>
-        <p><strong>Setor:</strong> <span id="summary-sector">Geral</span></p>
+        <p><strong>Colaborador:</strong> <strong class="text-orange" style="font-size: 1.1rem;">RE: <span id="summary-re">-</span></strong></p>
         <p style="margin-top: 6px;">
           <strong>Pontuação Total:</strong> <strong id="summary-total-score" class="text-orange" style="font-size: 1.15rem;">0 / 1000 pontos</strong>
           &nbsp;•&nbsp; <span id="summary-games-done">0 de 6 Jogos Realizados</span>
@@ -415,8 +404,7 @@
           <thead>
             <tr>
               <th>Pos.</th>
-              <th>Colaborador</th>
-              <th>Setor</th>
+              <th>RE do Colaborador</th>
               <th>Jogos</th>
               <th class="text-right">Pontos</th>
             </tr>
@@ -467,11 +455,9 @@
         <table class="styled-table" style="margin: 0;">
           <thead>
             <tr>
-              <th>Nome</th>
-              <th>RE</th>
-              <th>Setor</th>
+              <th>RE do Colaborador</th>
               <th>Jogos</th>
-              <th>Pontos</th>
+              <th>Pontuação</th>
               <th>Data</th>
             </tr>
           </thead>
@@ -504,10 +490,9 @@
         <div class="cert-manserv-header">MANSERV</div>
         <div class="cert-sub">CERTIFICADO DE PARTICIPAÇÃO • SIPAT 2026</div>
         <p style="font-size: 0.95rem; color: #444;">Certificamos que o colaborador</p>
-        <h3 class="cert-main-name" id="cert-player-name">Wesley Manserv</h3>
-        <p style="font-size: 0.9rem; color: #555;">do setor <strong id="cert-player-sector">Manutenção</strong></p>
+        <h3 class="cert-main-name" id="cert-player-name">RE: 123456</h3>
         <p style="font-size: 0.9rem; color: #555; margin-top: 10px;">
-          completou os desafios de conscientização sobre segurança e saúde ocupacional, totalizando:
+          completou os desafios de conscientização sobre segurança e saúde ocupacional da SIPAT Manserv, totalizando:
         </p>
         <div class="cert-points-badge" id="cert-score">1000 PONTOS</div>
         <p style="font-size: 0.8rem; color: #777; margin-top: 10px;">

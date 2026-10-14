@@ -88,11 +88,11 @@ class GameState {
     }
   }
 
-  setPlayer(re, name, sector) {
+  setPlayer(re) {
     this.player.re = (re || '').trim();
     this.player.email = this.player.re; // mantido para compatibilidade
-    this.player.name = (name || '').trim();
-    this.player.sector = (sector || '').trim();
+    this.player.name = '';
+    this.player.sector = '';
     this.save();
   }
 
