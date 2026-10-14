@@ -97,13 +97,16 @@ async function forwardToWebhook(payload) {
   }
 }
 
-// GET /api/player/:email - Fetch existing progress
-app.get('/api/player/:email', (req, res) => {
-  const email = (req.params.email || '').trim().toLowerCase();
-  if (!email) return res.status(400).json({ error: 'Email inválido' });
+// GET /api/player/:identifier - Fetch existing progress by RE or email
+app.get('/api/player/:identifier', (req, res) => {
+  const identifier = (req.params.identifier || '').trim().toLowerCase();
+  if (!identifier) return res.status(400).json({ error: 'RE inválido' });
 
   const db = readDb();
-  const playerRecord = db.find(p => p.email.toLowerCase() === email);
+  const playerRecord = db.find(p => 
+    (p.re && p.re.toLowerCase() === identifier) || 
+    (p.email && p.email.toLowerCase() === identifier)
+  );
 
   if (playerRecord) {
     res.json({ found: true, player: playerRecord });
@@ -112,17 +115,20 @@ app.get('/api/player/:email', (req, res) => {
   }
 });
 
-// POST /api/save-score - Save or update score
+// POST /api/save-score - Save or update score by RE
 app.post('/api/save-score', (req, res) => {
-  const { email, name, sector, scores, totalScore, completedCount, status } = req.body;
+  const { re, email, name, sector, scores, totalScore, completedCount, status } = req.body;
+  const cleanRe = (re || email || '').trim();
 
-  if (!email || !email.includes('@')) {
-    return res.status(400).json({ error: 'E-mail corporativo válido é obrigatório' });
+  if (!cleanRe) {
+    return res.status(400).json({ error: 'RE do colaborador é obrigatório' });
   }
 
-  const cleanEmail = email.trim().toLowerCase();
   const db = readDb();
-  const existingIdx = db.findIndex(p => p.email.toLowerCase() === cleanEmail);
+  const existingIdx = db.findIndex(p => 
+    (p.re && p.re.toLowerCase() === cleanRe.toLowerCase()) ||
+    (p.email && p.email.toLowerCase() === cleanRe.toLowerCase())
+  );
 
   const cleanScores = {
     level1: Number(scores?.level1 || 0),
@@ -137,7 +143,8 @@ app.post('/api/save-score', (req, res) => {
 
   const record = {
     id: existingIdx >= 0 ? db[existingIdx].id : 'manserv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-    email: cleanEmail,
+    re: cleanRe,
+    email: cleanRe, // mantido para compatibilidade
     name: (name || 'Colaborador Manserv').trim(),
     sector: (sector || 'Geral').trim(),
     scores: cleanScores,
@@ -178,7 +185,7 @@ app.get('/api/leaderboard', (req, res) => {
     .map((p, idx) => ({
       rank: idx + 1,
       name: p.name,
-      email: p.email,
+      re: p.re || p.email,
       sector: p.sector,
       totalScore: p.totalScore,
       completedCount: p.completedCount,
@@ -214,7 +221,7 @@ app.get('/api/export-csv', (req, res) => {
   const headers = [
     'ID',
     'Nome',
-    'Email',
+    'RE',
     'Setor/Unidade',
     'Nivel_1_Caca_Palavras',
     'Nivel_2_Forca',
@@ -231,7 +238,7 @@ app.get('/api/export-csv', (req, res) => {
   const rows = db.map(p => [
     `"${p.id || ''}"`,
     `"${(p.name || '').replace(/"/g, '""')}"`,
-    `"${p.email || ''}"`,
+    `"${p.re || p.email || ''}"`,
     `"${(p.sector || '').replace(/"/g, '""')}"`,
     p.scores?.level1 || 0,
     p.scores?.level2 || 0,

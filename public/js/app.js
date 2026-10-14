@@ -110,11 +110,11 @@ class SipatApp {
     const modal = document.getElementById('registration-modal');
     if (!modal) return;
 
-    const emailInput = document.getElementById('reg-email');
+    const reInput = document.getElementById('reg-re');
     const nameInput = document.getElementById('reg-name');
     const sectorInput = document.getElementById('reg-sector');
 
-    if (emailInput) emailInput.value = window.gameState?.player.email || '';
+    if (reInput) reInput.value = window.gameState?.player.re || window.gameState?.player.email || '';
     if (nameInput) nameInput.value = window.gameState?.player.name || '';
     if (sectorInput) sectorInput.value = window.gameState?.player.sector || '';
 
@@ -128,19 +128,19 @@ class SipatApp {
   }
 
   async handleRegistrationSubmit() {
-    const email = document.getElementById('reg-email')?.value.trim();
+    const re = document.getElementById('reg-re')?.value.trim();
     const name = document.getElementById('reg-name')?.value.trim();
     const sector = document.getElementById('reg-sector')?.value.trim();
 
-    if (!email || !email.includes('@')) {
-      alert('Por favor, informe um endereço de e-mail corporativo válido para registrar seus pontos.');
+    if (!re) {
+      alert('Por favor, informe seu RE para registrar seus pontos.');
       return;
     }
 
-    window.gameState?.setPlayer(email, name, sector);
+    window.gameState?.setPlayer(re, name, sector);
 
     // Check if player already had saved progress in database
-    await window.gameState?.checkExistingPlayer(email);
+    await window.gameState?.checkExistingPlayer(re);
 
     document.getElementById('registration-modal')?.close();
     this.updateProfileDisplay();
@@ -151,10 +151,11 @@ class SipatApp {
   updateProfileDisplay() {
     const player = window.gameState?.player;
     const nameEl = document.getElementById('profile-display-name');
-    const emailEl = document.getElementById('profile-display-email');
+    const reEl = document.getElementById('profile-display-re');
 
-    if (nameEl) nameEl.textContent = player?.name || player?.email || 'Colaborador';
-    if (emailEl) emailEl.textContent = player?.email || 'Sem e-mail';
+    const id = player?.re || player?.email;
+    if (nameEl) nameEl.textContent = player?.name || (id ? `RE: ${id}` : 'Colaborador');
+    if (reEl) reEl.textContent = id ? `RE: ${id}` : 'Informe seu RE';
   }
 
   updateHubUI() {
@@ -287,7 +288,7 @@ class SipatApp {
     const total = window.gameState?.getTotalScore();
     const completedCount = window.gameState?.getCompletedCount();
 
-    document.getElementById('summary-email').textContent = player?.email || 'Não informado';
+    document.getElementById('summary-re').textContent = player?.re || player?.email || 'Não informado';
     document.getElementById('summary-name').textContent = player?.name || 'Colaborador';
     document.getElementById('summary-sector').textContent = player?.sector || 'Geral';
     document.getElementById('summary-total-score').textContent = `${total} / 1000 pontos`;
@@ -358,8 +359,9 @@ class SipatApp {
 
     const player = window.gameState?.player;
     const total = window.gameState?.getTotalScore();
+    const id = player?.re || player?.email;
 
-    document.getElementById('cert-player-name').textContent = player?.name || player?.email;
+    document.getElementById('cert-player-name').textContent = player?.name || (id ? `RE: ${id}` : 'Colaborador');
     document.getElementById('cert-player-sector').textContent = player?.sector || 'Manserv Industrial';
     document.getElementById('cert-score').textContent = `${total} PONTOS`;
     document.getElementById('cert-date').textContent = new Date().toLocaleDateString('pt-BR');
@@ -389,18 +391,20 @@ class SipatApp {
       }
 
       if (tbody) {
+        const playerIdent = (window.gameState?.player.re || window.gameState?.player.email || '').toLowerCase();
         tbody.innerHTML = data.map(item => {
           let rankBadge = `${item.rank}º`;
           if (item.rank === 1) rankBadge = '🥇 1º';
           else if (item.rank === 2) rankBadge = '🥈 2º';
           else if (item.rank === 3) rankBadge = '🥉 3º';
 
-          const isCurrent = item.email.toLowerCase() === (window.gameState?.player.email || '').toLowerCase();
+          const itemIdent = (item.re || item.email || '').toLowerCase();
+          const isCurrent = Boolean(playerIdent && itemIdent === playerIdent);
 
           return `
             <tr class="${isCurrent ? 'current-player-row' : ''}">
               <td><strong>${rankBadge}</strong></td>
-              <td>${item.name || item.email} ${isCurrent ? '<span class="you-badge">(Você)</span>' : ''}</td>
+              <td>${item.name || 'Colaborador'} <small style="color:var(--color-primary); font-weight:700;">(RE: ${item.re || '-'})</small> ${isCurrent ? '<span class="you-badge">(Você)</span>' : ''}</td>
               <td>${item.sector || '-'}</td>
               <td>${item.completedCount}/6</td>
               <td class="text-right"><strong class="text-orange">${item.totalScore} pts</strong></td>
@@ -435,9 +439,9 @@ class SipatApp {
       if (tbody) {
         tbody.innerHTML = (data.players || []).map(p => `
           <tr>
-            <td><strong>${p.name}</strong></td>
-            <td>${p.email}</td>
-            <td>${p.sector}</td>
+            <td><strong>${p.name || '-'}</strong></td>
+            <td><strong>${p.re || p.email || '-'}</strong></td>
+            <td>${p.sector || '-'}</td>
             <td>${p.completedCount}/6</td>
             <td><strong>${p.totalScore} pts</strong></td>
             <td><small>${new Date(p.submittedAt).toLocaleString('pt-BR')}</small></td>

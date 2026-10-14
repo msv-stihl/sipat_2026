@@ -60,7 +60,7 @@
           <div class="user-avatar-circle">👤</div>
           <div class="user-info-text">
             <span class="user-name" id="profile-display-name">Colaborador</span>
-            <span class="user-email-dim" id="profile-display-email">Informe o e-mail</span>
+            <span class="user-email-dim" id="profile-display-re">Informe seu RE</span>
           </div>
         </div>
 
@@ -333,13 +333,13 @@
         <h3>📋 Identificação do Colaborador</h3>
       </div>
       <p style="color: var(--color-text-dim); margin-bottom: 20px; font-size: 0.9rem;">
-        Informe seu e-mail corporativo para vincular seus 1.000 pontos no banco de dados da SIPAT Manserv 2026.
+        Informe seu <strong>RE (Registro do Empregado)</strong> para vincular seus 1.000 pontos no banco de dados da SIPAT Manserv 2026.
       </p>
 
       <form id="registration-form">
         <div class="form-group">
-          <label for="reg-email">E-mail Corporativo *</label>
-          <input type="email" id="reg-email" class="form-input" placeholder="ex: colaborador@manserv.com.br" required />
+          <label for="reg-re">RE (Registro do Empregado - 6 dígitos) *</label>
+          <input type="text" id="reg-re" class="form-input" placeholder="ex: 123456" maxlength="6" inputmode="numeric" required />
         </div>
 
         <div class="form-group">
@@ -369,7 +369,7 @@
       </div>
 
       <div style="background: var(--color-surface-alt); padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 18px; border: 1px solid var(--color-border);">
-        <p><strong>Colaborador:</strong> <span id="summary-name">Wesley</span> (<span id="summary-email">email</span>)</p>
+        <p><strong>Colaborador:</strong> <span id="summary-name">Wesley</span> (<strong class="text-orange">RE: <span id="summary-re">-</span></strong>)</p>
         <p><strong>Setor:</strong> <span id="summary-sector">Geral</span></p>
         <p style="margin-top: 6px;">
           <strong>Pontuação Total:</strong> <strong id="summary-total-score" class="text-orange" style="font-size: 1.15rem;">0 / 1000 pontos</strong>
@@ -468,7 +468,7 @@
           <thead>
             <tr>
               <th>Nome</th>
-              <th>E-mail</th>
+              <th>RE</th>
               <th>Setor</th>
               <th>Jogos</th>
               <th>Pontos</th>

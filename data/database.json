@@ -40,5 +40,27 @@
     "submittedAt": "2026-10-14T18:27:13.451Z",
     "firstPlayedAt": "2026-10-14T18:09:10.195Z",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+  },
+  {
+    "id": "manserv_1792003550146_qgizz",
+    "re": "123456",
+    "email": "123456",
+    "name": "Wesley Manserv",
+    "sector": "Operações e Manutenção",
+    "scores": {
+      "level1": 100,
+      "level2": 120,
+      "level3": 150,
+      "level4": 180,
+      "level5": 220,
+      "level6": 230
+    },
+    "totalScore": 1000,
+    "maxPossible": 1000,
+    "completedCount": 6,
+    "status": "completed",
+    "submittedAt": "2026-10-14T18:45:50.146Z",
+    "firstPlayedAt": "2026-10-14T18:45:50.147Z",
+    "userAgent": "node"
   }
 ]

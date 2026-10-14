@@ -14,6 +14,7 @@ class GameState {
     // Sum = 100 + 120 + 150 + 180 + 220 + 230 = 1000 pts
 
     this.player = {
+      re: '',
       email: '',
       name: '',
       sector: ''
@@ -87,15 +88,18 @@ class GameState {
     }
   }
 
-  setPlayer(email, name, sector) {
-    this.player.email = (email || '').trim().toLowerCase();
+  setPlayer(re, name, sector) {
+    this.player.re = (re || '').trim();
+    this.player.email = this.player.re; // mantido para compatibilidade
     this.player.name = (name || '').trim();
     this.player.sector = (sector || '').trim();
     this.save();
   }
 
   hasValidPlayer() {
-    return Boolean(this.player.email && this.player.email.includes('@'));
+    // RE é um identificador de 6 dígitos sem validação rigorosa por enquanto
+    const id = this.player.re || this.player.email;
+    return Boolean(id && id.trim().length > 0);
   }
 
   setGameScore(levelKey, score, isCompleted = false, details = null) {
@@ -113,7 +117,7 @@ class GameState {
 
     this.save();
 
-    // Auto-sync in background if player email is present
+    // Auto-sync in background if player is registered
     if (this.hasValidPlayer()) {
       this.syncWithBackend(false);
     }
@@ -145,10 +149,11 @@ class GameState {
   }
 
   async syncWithBackend(isFinalSubmission = false) {
-    if (!this.hasValidPlayer()) return { success: false, error: 'Email não informado' };
+    if (!this.hasValidPlayer()) return { success: false, error: 'RE não informado' };
 
     const payload = {
-      email: this.player.email,
+      re: this.player.re || this.player.email,
+      email: this.player.re || this.player.email,
       name: this.player.name,
       sector: this.player.sector,
       scores: this.scores,
@@ -187,15 +192,16 @@ class GameState {
     }
   }
 
-  async checkExistingPlayer(email) {
-    if (!email) return null;
+  async checkExistingPlayer(identifier) {
+    if (!identifier) return null;
     try {
-      const res = await fetch(`/api/player/${encodeURIComponent(email.trim().toLowerCase())}`);
+      const res = await fetch(`/api/player/${encodeURIComponent(identifier.trim().toLowerCase())}`);
       if (res.ok) {
         const data = await res.json();
         if (data.found && data.player) {
           const p = data.player;
-          this.player.email = p.email;
+          this.player.re = p.re || p.email;
+          this.player.email = p.re || p.email;
           this.player.name = p.name || this.player.name;
           this.player.sector = p.sector || this.player.sector;
           if (p.scores) {
