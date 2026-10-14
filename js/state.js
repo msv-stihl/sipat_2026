@@ -148,6 +148,19 @@ class GameState {
     }
   }
 
+  saveLocalRecord(record) {
+    try {
+      const history = JSON.parse(localStorage.getItem('sipat_history') || '[]');
+      const cleanRec = { ...record, submittedAt: record.submittedAt || new Date().toISOString() };
+      const idx = history.findIndex(p => p.re === cleanRec.re);
+      if (idx >= 0) history[idx] = cleanRec;
+      else history.push(cleanRec);
+      localStorage.setItem('sipat_history', JSON.stringify(history));
+    } catch (e) {
+      console.warn('Local history error:', e);
+    }
+  }
+
   async syncWithBackend(isFinalSubmission = false) {
     if (!this.hasValidPlayer()) return { success: false, error: 'RE não informado' };
 
@@ -159,8 +172,25 @@ class GameState {
       scores: this.scores,
       totalScore: this.getTotalScore(),
       completedCount: this.getCompletedCount(),
-      status: isFinalSubmission ? 'submitted' : (this.getCompletedCount() >= 6 ? 'completed' : 'in_progress')
+      status: isFinalSubmission ? 'submitted' : (this.getCompletedCount() >= 6 ? 'completed' : 'in_progress'),
+      submittedAt: new Date().toISOString()
     };
+
+    // Always keep a local copy in browser
+    this.saveLocalRecord(payload);
+
+    // Direct client webhook dispatch if configured (e.g. Google Sheets on GitHub Pages)
+    const customWebhook = localStorage.getItem('sipat_webhook_url');
+    if (customWebhook && isFinalSubmission) {
+      try {
+        fetch(customWebhook, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      } catch (e) {}
+    }
 
     try {
       const res = await fetch('/api/save-score', {
@@ -169,27 +199,25 @@ class GameState {
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || 'Falha ao salvar no servidor');
+      if (res.ok) {
+        const result = await res.json();
+        if (isFinalSubmission) {
+          this.isSubmitted = true;
+          this.lastSubmittedAt = new Date().toISOString();
+          this.save();
+        }
+        return { success: true, data: result };
       }
-
-      const result = await res.json();
-      if (isFinalSubmission) {
-        this.isSubmitted = true;
-        this.lastSubmittedAt = new Date().toISOString();
-        this.save();
-      }
-      return { success: true, data: result };
     } catch (err) {
-      console.warn('Backend sync failed, state preserved locally:', err);
-      if (isFinalSubmission) {
-        this.isSubmitted = true;
-        this.lastSubmittedAt = new Date().toISOString();
-        this.save();
-      }
-      return { success: true, localOnly: true, message: 'Salvo no navegador (offline)' };
+      // Running on static GitHub Pages or server offline
     }
+
+    if (isFinalSubmission) {
+      this.isSubmitted = true;
+      this.lastSubmittedAt = new Date().toISOString();
+      this.save();
+    }
+    return { success: true, localOnly: true, message: 'Salvo com sucesso!' };
   }
 
   async checkExistingPlayer(identifier) {

@@ -413,7 +413,27 @@ class SipatApp {
         }).join('');
       }
     } catch (err) {
-      if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: #ff5252; padding: 20px;">Não foi possível carregar o ranking no momento.</td></tr>`;
+      // Fallback for GitHub Pages or offline: read local history
+      const localHistory = JSON.parse(localStorage.getItem('sipat_history') || '[]');
+      if (localHistory.length > 0 && tbody) {
+        const sorted = [...localHistory].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+        const playerIdent = (window.gameState?.player.re || window.gameState?.player.email || '').toLowerCase();
+        tbody.innerHTML = sorted.map((item, idx) => {
+          const itemIdent = (item.re || item.email || '').toLowerCase();
+          const isCurrent = Boolean(playerIdent && itemIdent === playerIdent);
+          return `
+            <tr class="${isCurrent ? 'current-player-row' : ''}">
+              <td><strong>${idx + 1}º</strong></td>
+              <td>${item.name || 'Colaborador'} <small style="color:var(--color-primary); font-weight:700;">(RE: ${item.re || '-'})</small> ${isCurrent ? '<span class="you-badge">(Você)</span>' : ''}</td>
+              <td>${item.sector || '-'}</td>
+              <td>${item.completedCount || 0}/6</td>
+              <td class="text-right"><strong class="text-orange">${item.totalScore || 0} pts</strong></td>
+            </tr>
+          `;
+        }).join('');
+      } else if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">Você é o primeiro participante! Complete um jogo para registrar sua pontuação.</td></tr>`;
+      }
     }
   }
 
@@ -424,57 +444,146 @@ class SipatApp {
 
     modal.showModal();
     this.refreshAdminData();
+
+    // Attach client CSV export handler for GitHub Pages
+    const exportBtn = document.getElementById('btn-export-csv');
+    if (exportBtn) {
+      exportBtn.onclick = (e) => {
+        // If on GitHub Pages or static host, trigger browser CSV export directly
+        if (window.location.hostname.includes('github.io') || window.location.protocol === 'file:') {
+          e.preventDefault();
+          this.exportClientCsv();
+        }
+      };
+    }
+  }
+
+  exportClientCsv() {
+    const history = JSON.parse(localStorage.getItem('sipat_history') || '[]');
+    const headers = [
+      'ID', 'Nome', 'RE', 'Setor/Unidade',
+      'Nivel_1_Caca_Palavras', 'Nivel_2_Forca', 'Nivel_3_Questionario',
+      'Nivel_4_Tomada_Decisao', 'Nivel_5_Encontre_Riscos', 'Nivel_6_Cruzadinha',
+      'Pontuacao_Total', 'Jogos_Concluidos', 'Status', 'Data_Envio'
+    ];
+
+    const rows = history.map(p => [
+      `"${p.id || 'local_' + p.re}"`,
+      `"${(p.name || '').replace(/"/g, '""')}"`,
+      `"${p.re || p.email || ''}"`,
+      `"${(p.sector || '').replace(/"/g, '""')}"`,
+      p.scores?.level1 || 0,
+      p.scores?.level2 || 0,
+      p.scores?.level3 || 0,
+      p.scores?.level4 || 0,
+      p.scores?.level5 || 0,
+      p.scores?.level6 || 0,
+      p.totalScore || 0,
+      p.completedCount || 0,
+      `"${p.status || ''}"`,
+      `"${p.submittedAt || ''}"`
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'sipat_manserv_2026_resultados.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   async refreshAdminData() {
+    let loadedFromServer = false;
+
     try {
       const res = await fetch('/api/results');
-      const data = await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        loadedFromServer = true;
 
-      document.getElementById('admin-total-players').textContent = data.summary.totalParticipants || 0;
-      document.getElementById('admin-avg-score').textContent = `${data.summary.avgScore || 0} pts`;
-      document.getElementById('admin-completion-rate').textContent = `${data.summary.completionRate || 0}%`;
+        document.getElementById('admin-total-players').textContent = data.summary.totalParticipants || 0;
+        document.getElementById('admin-avg-score').textContent = `${data.summary.avgScore || 0} pts`;
+        document.getElementById('admin-completion-rate').textContent = `${data.summary.completionRate || 0}%`;
+
+        const tbody = document.getElementById('admin-players-tbody');
+        if (tbody) {
+          tbody.innerHTML = (data.players || []).map(p => `
+            <tr>
+              <td><strong>${p.name || '-'}</strong></td>
+              <td><strong>${p.re || p.email || '-'}</strong></td>
+              <td>${p.sector || '-'}</td>
+              <td>${p.completedCount}/6</td>
+              <td><strong>${p.totalScore} pts</strong></td>
+              <td><small>${new Date(p.submittedAt).toLocaleString('pt-BR')}</small></td>
+            </tr>
+          `).join('');
+        }
+      }
+    } catch (err) {
+      // Server not reachable
+    }
+
+    // Fallback calculation for GitHub Pages / static hosting
+    if (!loadedFromServer) {
+      const history = JSON.parse(localStorage.getItem('sipat_history') || '[]');
+      const total = history.length;
+      const avg = total ? Math.round(history.reduce((a, b) => a + (b.totalScore || 0), 0) / total) : 0;
+      const completed = history.filter(p => p.completedCount >= 6).length;
+
+      document.getElementById('admin-total-players').textContent = total;
+      document.getElementById('admin-avg-score').textContent = `${avg} pts`;
+      document.getElementById('admin-completion-rate').textContent = total ? `${Math.round((completed / total) * 100)}%` : '0%';
 
       const tbody = document.getElementById('admin-players-tbody');
       if (tbody) {
-        tbody.innerHTML = (data.players || []).map(p => `
+        tbody.innerHTML = history.map(p => `
           <tr>
             <td><strong>${p.name || '-'}</strong></td>
             <td><strong>${p.re || p.email || '-'}</strong></td>
             <td>${p.sector || '-'}</td>
-            <td>${p.completedCount}/6</td>
-            <td><strong>${p.totalScore} pts</strong></td>
-            <td><small>${new Date(p.submittedAt).toLocaleString('pt-BR')}</small></td>
+            <td>${p.completedCount || 0}/6</td>
+            <td><strong>${p.totalScore || 0} pts</strong></td>
+            <td><small>${new Date(p.submittedAt || Date.now()).toLocaleString('pt-BR')}</small></td>
           </tr>
         `).join('');
       }
+    }
 
-      // Load config webhook
-      const cfgRes = await fetch('/api/config');
-      const cfg = await cfgRes.json();
-      const input = document.getElementById('admin-webhook-url');
-      if (input && cfg.webhookUrl) input.value = cfg.webhookUrl;
-    } catch (err) {
-      console.warn('Admin load error:', err);
+    // Load config webhook (server or localStorage)
+    const input = document.getElementById('admin-webhook-url');
+    if (input) {
+      const localWebhook = localStorage.getItem('sipat_webhook_url') || '';
+      input.value = localWebhook;
+
+      try {
+        const cfgRes = await fetch('/api/config');
+        if (cfgRes.ok) {
+          const cfg = await cfgRes.json();
+          if (cfg.webhookUrl) input.value = cfg.webhookUrl;
+        }
+      } catch (err) {}
     }
   }
 
   async saveWebhookUrl() {
     const input = document.getElementById('admin-webhook-url');
-    const url = input?.value.trim();
+    const url = input?.value.trim() || '';
+
+    // Always save in localStorage for GitHub Pages
+    localStorage.setItem('sipat_webhook_url', url);
 
     try {
-      const res = await fetch('/api/config', {
+      await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ webhookUrl: url })
       });
-      if (res.ok) {
-        alert('URL de Webhook salva com sucesso! Todas as pontuações serão encaminhadas.');
-      }
-    } catch {
-      alert('Erro ao salvar webhook.');
-    }
+    } catch {}
+
+    alert('URL de Webhook configurada com sucesso! As pontuações serão encaminhadas.');
   }
 }
 
