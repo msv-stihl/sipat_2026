@@ -2,7 +2,7 @@
 class DecisionGame {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
-    this.situations = [
+    this.baseSituations = [
       {
         id: 1,
         title: 'Situação 1: Condição Inesperada no Equipamento',
@@ -104,15 +104,38 @@ class DecisionGame {
       }
     ];
 
+    this.situations = [];
     this.currentIdx = 0;
     this.decisions = {}; // id -> { selectedKey: 'A', isCorrect: bool }
     this.maxPoints = 180;
     this.pointsPerSituation = 60; // 3 * 60 = 180 pts
   }
 
+  shuffleOptions() {
+    const letters = ['A', 'B', 'C', 'D'];
+    this.situations = this.baseSituations.map(bs => {
+      const shuffledOptions = bs.options.map(o => ({ ...o }));
+      for (let i = shuffledOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+      }
+
+      const newOptions = shuffledOptions.map((opt, idx) => ({
+        ...opt,
+        key: letters[idx]
+      }));
+
+      return {
+        ...bs,
+        options: newOptions
+      };
+    });
+  }
+
   init() {
     this.currentIdx = 0;
     this.decisions = {};
+    this.shuffleOptions();
     this.render();
   }
 

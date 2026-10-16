@@ -76,9 +76,11 @@ class CrosswordGame {
     this.activeWordId = '1H';
     this.activeCell = { r: 2, c: 1 };
     this.isVerified = false;
+    this.hiddenInput = null;
   }
 
   init() {
+    this.removeHiddenInput();
     this.userGrid = {};
     this.activeWordId = '1H';
     this.activeCell = { r: 2, c: 1 };
@@ -279,6 +281,7 @@ class CrosswordGame {
           this.activeWordId = info.words[0];
         }
 
+        this.enableMobileKeyboard();
         this.render();
       });
     });
@@ -293,6 +296,7 @@ class CrosswordGame {
         if (w) {
           this.activeWordId = wordId;
           this.activeCell = { r: w.row, c: w.col };
+          this.enableMobileKeyboard();
           this.render();
         }
       });
@@ -307,10 +311,12 @@ class CrosswordGame {
       });
     });
 
-    // Physical Keyboard
+    // Physical Keyboard (desktop ou celular com o input oculto focado)
     const keyHandler = (e) => {
       // Only process when crossword is in DOM
       if (!document.getElementById('cw-btn-verify')) return;
+      // Eventos vindos do input oculto já são tratados no próprio input
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
 
       if (e.key === 'Backspace') {
         this.handleKeyPress('BACKSPACE');
@@ -335,6 +341,60 @@ class CrosswordGame {
         this.verifyCrossword();
       });
     }
+  }
+
+  // Input invisível que abre o teclado nativo do celular ao selecionar uma palavra/casa
+  enableMobileKeyboard() {
+    if (!this.hiddenInput || !this.hiddenInput.isConnected) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'cw-hidden-input';
+      input.setAttribute('autocomplete', 'off');
+      input.setAttribute('autocorrect', 'off');
+      input.setAttribute('autocapitalize', 'characters');
+      input.setAttribute('spellcheck', 'false');
+      input.setAttribute('maxlength', '1');
+      input.setAttribute('aria-hidden', 'true');
+      input.setAttribute('tabindex', '-1');
+
+      input.addEventListener('input', () => {
+        if (!document.getElementById('cw-btn-verify')) return;
+        const typed = input.value.toUpperCase().replace(/[^A-Z]/g, '');
+        input.value = '';
+        for (const char of typed) {
+          this.handleKeyPress(char);
+        }
+        input.focus({ preventScroll: true });
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace') {
+          if (!input.value) {
+            e.preventDefault();
+            this.handleKeyPress('BACKSPACE');
+          }
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+        }
+      });
+
+      document.body.appendChild(input);
+      this.hiddenInput = input;
+    }
+
+    try {
+      this.hiddenInput.focus({ preventScroll: true });
+    } catch (err) {
+      this.hiddenInput.focus();
+    }
+  }
+
+  removeHiddenInput() {
+    document.querySelectorAll('.cw-hidden-input').forEach(el => {
+      if (document.activeElement === el) el.blur();
+      el.remove();
+    });
+    this.hiddenInput = null;
   }
 
   handleKeyPress(char) {

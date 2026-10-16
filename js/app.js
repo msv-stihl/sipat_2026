@@ -218,11 +218,16 @@ class SipatApp {
   showHub() {
     window.sounds?.playClick();
     this.currentGameKey = null;
+    this.clearCrosswordKeyboard();
 
     document.getElementById('hub-view')?.classList.remove('hidden');
     document.getElementById('game-screen-view')?.classList.add('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     this.updateHubUI();
+  }
+
+  clearCrosswordKeyboard() {
+    document.querySelectorAll('.cw-hidden-input').forEach(el => el.remove());
   }
 
   openGame(levelKey) {
@@ -233,6 +238,7 @@ class SipatApp {
 
     window.sounds?.playClick();
     this.currentGameKey = levelKey;
+    this.clearCrosswordKeyboard();
 
     document.getElementById('hub-view')?.classList.add('hidden');
     const gameScreen = document.getElementById('game-screen-view');

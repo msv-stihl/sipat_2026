@@ -7,8 +7,12 @@ class WordSearchGame {
     this.grid = [];
     this.foundWords = [];
     this.selectedCells = [];
-    this.isMouseDown = false;
+    this.isPointerDown = false;
+    this.dragMoved = false;
     this.startCell = null;
+    this.pendingTap = null;
+    this.onPointerMove = null;
+    this.onPointerUp = null;
     this.wordLocations = {}; // word -> array of {r, c}
     this.maxPoints = 100;
   }
@@ -16,6 +20,10 @@ class WordSearchGame {
   init() {
     this.foundWords = [];
     this.selectedCells = [];
+    this.isPointerDown = false;
+    this.dragMoved = false;
+    this.startCell = null;
+    this.pendingTap = null;
     this.generateGrid();
     this.render();
   }
@@ -178,48 +186,76 @@ class WordSearchGame {
     const board = document.getElementById('ws-grid-board');
     if (!board) return;
 
-    const cells = board.querySelectorAll('.ws-cell');
+    // Remove listeners de uma renderização anterior
+    if (this.onPointerMove) window.removeEventListener('pointermove', this.onPointerMove);
+    if (this.onPointerUp) {
+      window.removeEventListener('pointerup', this.onPointerUp);
+      window.removeEventListener('pointercancel', this.onPointerUp);
+    }
 
-    // Pointer events (works for mouse + touch seamlessly)
-    cells.forEach(cell => {
-      cell.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        window.sounds?.playClick();
-        this.isMouseDown = true;
-        const r = parseInt(cell.dataset.r, 10);
-        const c = parseInt(cell.dataset.c, 10);
-        this.startCell = { r, c };
-        this.selectRange(this.startCell, this.startCell);
-      });
+    board.addEventListener('pointerdown', (e) => {
+      const cell = e.target.closest('.ws-cell');
+      if (!cell) return;
+      e.preventDefault();
+      window.sounds?.playClick();
 
-      cell.addEventListener('pointerenter', (e) => {
-        if (!this.isMouseDown || !this.startCell) return;
-        const r = parseInt(cell.dataset.r, 10);
-        const c = parseInt(cell.dataset.c, 10);
-        this.selectRange(this.startCell, { r, c });
-      });
+      const r = parseInt(cell.dataset.r, 10);
+      const c = parseInt(cell.dataset.c, 10);
 
-      // Also tap click mode: tap 1st letter, then tap last letter
-      cell.addEventListener('click', () => {
-        const r = parseInt(cell.dataset.r, 10);
-        const c = parseInt(cell.dataset.c, 10);
-        if (!this.startCell) {
-          this.startCell = { r, c };
-          this.selectRange(this.startCell, this.startCell);
-        } else {
-          this.selectRange(this.startCell, { r, c });
-          this.checkSelectedWord();
-          this.startCell = null;
-        }
-      });
+      // Modo toque: o 1º toque marca o início e o 2º toque fecha a palavra
+      if (this.pendingTap && (this.pendingTap.r !== r || this.pendingTap.c !== c)) {
+        const start = this.pendingTap;
+        this.pendingTap = null;
+        this.isPointerDown = false;
+        this.startCell = null;
+        this.selectRange(start, { r, c });
+        this.checkSelectedWord();
+        return;
+      }
+
+      this.isPointerDown = true;
+      this.dragMoved = false;
+      this.startCell = { r, c };
+      this.pendingTap = { r, c };
+
+      // Captura o ponteiro para receber os movimentos/levantamento fora do tabuleiro
+      try {
+        board.setPointerCapture(e.pointerId);
+      } catch (err) {}
+
+      this.selectRange(this.startCell, this.startCell);
     });
 
-    window.addEventListener('pointerup', () => {
-      if (this.isMouseDown) {
-        this.isMouseDown = false;
+    // Em telas de toque o pointerenter não dispara nas outras células durante o arraste,
+    // por isso localizamos a célula sob o dedo a cada movimento.
+    this.onPointerMove = (e) => {
+      if (!this.isPointerDown || !this.startCell) return;
+
+      const cell = this.getCellAt(e.clientX, e.clientY);
+      if (!cell) return;
+
+      const r = parseInt(cell.dataset.r, 10);
+      const c = parseInt(cell.dataset.c, 10);
+      if (r === this.startCell.r && c === this.startCell.c) return;
+
+      this.dragMoved = true;
+      this.selectRange(this.startCell, { r, c });
+    };
+
+    this.onPointerUp = () => {
+      if (!this.isPointerDown) return;
+      this.isPointerDown = false;
+
+      if (this.dragMoved) {
+        this.pendingTap = null;
+        this.startCell = null;
         this.checkSelectedWord();
       }
-    });
+    };
+
+    window.addEventListener('pointermove', this.onPointerMove, { passive: true });
+    window.addEventListener('pointerup', this.onPointerUp);
+    window.addEventListener('pointercancel', this.onPointerUp);
 
     const resetBtn = document.getElementById('ws-btn-reset');
     if (resetBtn) {
@@ -227,6 +263,12 @@ class WordSearchGame {
         this.init();
       });
     }
+  }
+
+  getCellAt(x, y) {
+    const el = document.elementFromPoint(x, y);
+    if (!el || !el.closest) return null;
+    return el.closest('.ws-cell');
   }
 
   selectRange(start, end) {

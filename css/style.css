@@ -1654,6 +1654,25 @@ a {
   background: var(--color-surface-alt);
 }
 
+/* Input invisível usado apenas para acionar o teclado nativo do celular */
+.cw-hidden-input {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  opacity: 0;
+  font-size: 16px;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  outline: none;
+  pointer-events: none;
+}
+
 .cw-clues-container {
   display: grid;
   grid-template-columns: 1fr 1fr;

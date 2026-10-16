@@ -5,12 +5,12 @@ class HangmanGame {
     this.rounds = [
       {
         phrase: 'DIALOGO DIARIO DE SEGURANCA',
-        displayHint: 'Prática de segurança realizada diariamente com a equipe antes do turno (DDS).',
+        displayHint: 'Prática de segurança realizada diariamente com a equipe antes do início do turno.',
         category: 'Procedimento Preventivo'
       },
       {
         phrase: 'EQUIPAMENTO DE PROTECAO INDIVIDUAL',
-        displayHint: 'Dispositivo ou produto de uso pessoal destinado a proteger a saúde física (EPI).',
+        displayHint: 'Dispositivo ou produto de uso pessoal destinado a proteger a integridade física.',
         category: 'Segurança Operacional'
       },
       {

@@ -2,7 +2,7 @@
 class QuizGame {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
-    this.questions = [
+    this.baseQuestions = [
       {
         id: 1,
         question: 'Você identificou uma condição insegura durante sua atividade. O que deve fazer?',
@@ -65,6 +65,7 @@ class QuizGame {
       }
     ];
 
+    this.questions = [];
     this.currentIdx = 0;
     this.userAnswers = {}; // id -> 'A' | 'B' | 'C' | 'D'
     this.isSubmitted = false;
@@ -73,10 +74,40 @@ class QuizGame {
     this.passThreshold = 4; // Needs 4 of 5
   }
 
+  shuffleOptions() {
+    const letters = ['A', 'B', 'C', 'D'];
+    this.questions = this.baseQuestions.map(bq => {
+      const originalCorrectOpt = bq.options.find(o => o.key === bq.correct);
+      const correctText = originalCorrectOpt ? originalCorrectOpt.text : '';
+
+      const shuffledTexts = bq.options.map(o => o.text);
+      for (let i = shuffledTexts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledTexts[i], shuffledTexts[j]] = [shuffledTexts[j], shuffledTexts[i]];
+      }
+
+      const newOptions = shuffledTexts.map((text, idx) => ({
+        key: letters[idx],
+        text
+      }));
+
+      const newCorrectOpt = newOptions.find(o => o.text === correctText);
+
+      return {
+        id: bq.id,
+        question: bq.question,
+        options: newOptions,
+        correct: newCorrectOpt ? newCorrectOpt.key : 'A',
+        explanation: bq.explanation
+      };
+    });
+  }
+
   init() {
     this.currentIdx = 0;
     this.userAnswers = {};
     this.isSubmitted = false;
+    this.shuffleOptions();
     this.render();
   }
 
