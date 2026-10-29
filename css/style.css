@@ -316,51 +316,58 @@ a {
 .user-profile-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   background: var(--color-surface);
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-border);
   cursor: pointer;
   transition: var(--transition);
+  max-width: 280px;
 }
 
 .user-profile-pill:hover {
   border-color: var(--color-primary);
+  background: var(--color-surface-hover);
 }
 
 .user-avatar-circle {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--color-primary-light);
   color: var(--color-primary);
+  border: 1px solid rgba(255, 70, 10, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.85rem;
+  font-weight: 800;
+  font-size: 0.8rem;
+  flex-shrink: 0;
 }
 
 .user-info-text {
   display: flex;
   flex-direction: column;
   text-align: left;
-  max-width: 130px;
+  max-width: 200px;
+  overflow: hidden;
 }
 
 .user-name {
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.84rem;
+  font-weight: 700;
   color: var(--color-white);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .user-email-dim {
-  font-size: 0.7rem;
-  color: var(--color-text-dim);
+  font-size: 0.72rem;
+  color: #ff8a65;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

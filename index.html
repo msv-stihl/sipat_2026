@@ -56,8 +56,8 @@
         </button>
 
         <!-- Player Profile Pill -->
-        <div class="user-profile-pill" id="btn-edit-profile" title="Clique para editar seu perfil">
-          <div class="user-avatar-circle">👤</div>
+        <div class="user-profile-pill" id="btn-edit-profile" title="Ver perfil do colaborador">
+          <div class="user-avatar-circle" id="profile-avatar">👤</div>
           <div class="user-info-text">
             <span class="user-name" id="profile-display-name">Colaborador</span>
             <span class="user-email-dim" id="profile-display-re">Informe seu RE</span>
@@ -328,25 +328,67 @@
 
   <!-- 1. Registration Modal -->
   <dialog id="registration-modal">
-    <div class="modal-content-box">
+    <div class="modal-content-box" style="max-width: 480px;">
       <div class="modal-header">
         <h3>📋 Identificação do Colaborador</h3>
       </div>
-      <p style="color: var(--color-text-dim); margin-bottom: 20px; font-size: 0.9rem;">
-        Informe seu <strong>RE (Registro do Empregado)</strong> para vincular seus 1.000 pontos no banco de dados da SIPAT Manserv 2026.
+      <p style="color: var(--color-text-dim); margin-bottom: 16px; font-size: 0.9rem; line-height: 1.45;">
+        Para acessar os desafios da <strong>SIPAT Manserv 2026</strong>, informe seu <strong>RE (Registro do Empregado)</strong> cadastrado na lista oficial.
       </p>
 
+      <div id="reg-error-box" class="form-error-alert hidden" style="background: rgba(255, 82, 82, 0.15); border: 1px solid #FF5252; color: #ff8a80; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 0.88rem; margin-bottom: 16px; line-height: 1.4;">
+      </div>
+
+      <div id="reg-success-box" class="form-success-alert hidden" style="background: rgba(0, 230, 118, 0.15); border: 1px solid #00E676; color: #b9f6ca; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 0.88rem; margin-bottom: 16px; line-height: 1.4;">
+      </div>
+
       <form id="registration-form">
-        <div class="form-group">
-          <label for="reg-re">RE (Registro do Empregado - 6 dígitos) *</label>
-          <input type="text" id="reg-re" class="form-input" placeholder="ex: 123456" maxlength="6" inputmode="numeric" autofocus required />
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label for="reg-re" style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">RE (Registro do Empregado) *</label>
+          <input type="text" id="reg-re" class="form-input" placeholder="Digite seu RE (ex: 009120 ou 028885)" maxlength="10" autofocus required style="font-size: 1.05rem; letter-spacing: 0.05em;" />
+          <small style="color: var(--color-text-dim); display: block; margin-top: 6px; font-size: 0.8rem; line-height: 1.35;">
+            🔒 <strong>Atenção:</strong> O acesso é verificado na lista oficial. Cada colaborador possui direito a <strong>uma única tentativa</strong>, vinculada ao seu RE.
+          </small>
         </div>
 
-        <div class="modal-actions">
+        <div class="modal-actions" style="margin-top: 20px;">
           <button type="button" class="btn btn-secondary" id="reg-btn-cancel" style="display: none;">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Iniciar Missão SIPAT ▶</button>
+          <button type="submit" class="btn btn-primary btn-highlight" id="reg-btn-submit" style="width: 100%;">
+            Verificar e Iniciar Missão SIPAT ▶
+          </button>
         </div>
       </form>
+    </div>
+  </dialog>
+
+  <!-- 1.1 Profile Info Modal (view-only confirmed profile) -->
+  <dialog id="profile-info-modal">
+    <div class="modal-content-box" style="max-width: 440px; text-align: center;">
+      <div class="modal-header" style="justify-content: center; position: relative;">
+        <h3>👤 Perfil do Colaborador</h3>
+        <button type="button" class="modal-close-btn" style="position: absolute; right: 0;" onclick="document.getElementById('profile-info-modal')?.close()">✕</button>
+      </div>
+
+      <div style="background: var(--color-surface-alt); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--color-border); margin: 15px 0;">
+        <div style="width: 60px; height: 60px; border-radius: 50%; background: var(--color-primary-light); color: var(--color-primary); font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;" id="info-avatar-badge">
+          👤
+        </div>
+        <h4 id="info-employee-name" style="font-size: 1.15rem; color: var(--color-white); margin-bottom: 4px;">-</h4>
+        <p style="color: var(--color-primary); font-weight: 700; font-size: 0.95rem;" id="info-employee-re">RE: -</p>
+        <div style="display: inline-block; background: var(--color-success-bg); color: var(--color-success); padding: 4px 10px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; margin-top: 8px;">
+          ✓ Acesso Autorizado na SIPAT 2026
+        </div>
+      </div>
+
+      <p style="font-size: 0.84rem; color: var(--color-text-dim); line-height: 1.4; margin-bottom: 20px;">
+        Seu registro está vinculado a esta sessão. Para garantir a segurança e a integridade da premiação, não é permitido alterar o RE nem realizar mais de uma tentativa.
+      </p>
+
+      <div class="modal-actions" style="justify-content: center;">
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('profile-info-modal')?.close()">
+          Continuar Jogando ▶
+        </button>
+      </div>
     </div>
   </dialog>
 

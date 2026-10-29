@@ -17,7 +17,8 @@ class GameState {
       re: '',
       email: '',
       name: '',
-      sector: ''
+      sector: '',
+      sessionId: ''
     };
 
     this.scores = {
@@ -54,6 +55,16 @@ class GameState {
     this.load();
   }
 
+  getSessionId() {
+    let sid = this.player.sessionId || localStorage.getItem('sipat_session_id');
+    if (!sid) {
+      sid = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('sipat_session_id', sid);
+    }
+    this.player.sessionId = sid;
+    return sid;
+  }
+
   load() {
     try {
       const raw = localStorage.getItem(STATE_STORAGE_KEY);
@@ -65,6 +76,9 @@ class GameState {
         if (parsed.gameDetails) this.gameDetails = { ...this.gameDetails, ...parsed.gameDetails };
         if (parsed.isSubmitted !== undefined) this.isSubmitted = parsed.isSubmitted;
         if (parsed.lastSubmittedAt) this.lastSubmittedAt = parsed.lastSubmittedAt;
+      }
+      if (!this.player.sessionId) {
+        this.player.sessionId = localStorage.getItem('sipat_session_id') || '';
       }
     } catch (e) {
       console.warn('Failed to load local state:', e);
@@ -82,24 +96,38 @@ class GameState {
         lastSubmittedAt: this.lastSubmittedAt
       };
       localStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(data));
+      if (this.player.sessionId) {
+        localStorage.setItem('sipat_session_id', this.player.sessionId);
+      }
       this.notify();
     } catch (e) {
       console.warn('Failed to save local state:', e);
     }
   }
 
-  setPlayer(re) {
+  setPlayer(re, name = '', sessionId = '') {
     this.player.re = (re || '').trim();
     this.player.email = this.player.re; // mantido para compatibilidade
-    this.player.name = '';
-    this.player.sector = '';
+    this.player.name = (name || this.player.name || '').trim();
+    this.player.sector = 'Manserv';
+    this.player.sessionId = sessionId || this.player.sessionId || this.getSessionId();
+    this.save();
+  }
+
+  clearPlayer() {
+    this.player = {
+      re: '',
+      email: '',
+      name: '',
+      sector: '',
+      sessionId: ''
+    };
     this.save();
   }
 
   hasValidPlayer() {
-    // RE é um identificador de 6 dígitos sem validação rigorosa por enquanto
-    const id = this.player.re || this.player.email;
-    return Boolean(id && id.trim().length > 0);
+    // Acesso autorizado apenas se tiver RE e Nome verificados
+    return Boolean(this.player.re && this.player.name && this.player.re.trim().length > 0);
   }
 
   setGameScore(levelKey, score, isCompleted = false, details = null) {
@@ -162,17 +190,19 @@ class GameState {
   }
 
   async syncWithBackend(isFinalSubmission = false) {
-    if (!this.hasValidPlayer()) return { success: false, error: 'RE não informado' };
+    if (!this.hasValidPlayer()) return { success: false, error: 'RE não informado ou não autorizado' };
 
     const payload = {
       re: this.player.re || this.player.email,
       email: this.player.re || this.player.email,
       name: this.player.name,
-      sector: this.player.sector,
+      sector: this.player.sector || 'Manserv',
+      sessionId: this.getSessionId(),
+      isFinalSubmission: Boolean(isFinalSubmission),
       scores: this.scores,
       totalScore: this.getTotalScore(),
       completedCount: this.getCompletedCount(),
-      status: isFinalSubmission ? 'submitted' : (this.getCompletedCount() >= 6 ? 'completed' : 'in_progress'),
+      status: isFinalSubmission ? 'completed' : (this.getCompletedCount() >= 6 ? 'completed' : 'in_progress'),
       submittedAt: new Date().toISOString()
     };
 
@@ -220,37 +250,166 @@ class GameState {
     return { success: true, localOnly: true, message: 'Salvo com sucesso!' };
   }
 
-  async checkExistingPlayer(identifier) {
-    if (!identifier) return null;
+  // Authorize RE against lista_nomes.xlsx & enforce single-attempt
+  async checkAndAuthorizeRe(inputRe) {
+    const clean = (inputRe || '').trim();
+    if (!clean) {
+      return { authorized: false, error: 'Por favor, informe seu RE para acessar a SIPAT 2026.' };
+    }
+
+    const sessionId = this.getSessionId();
+
     try {
-      const res = await fetch(`/api/player/${encodeURIComponent(identifier.trim().toLowerCase())}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.found && data.player) {
-          const p = data.player;
-          this.player.re = p.re || p.email;
-          this.player.email = p.re || p.email;
-          this.player.name = p.name || this.player.name;
-          this.player.sector = p.sector || this.player.sector;
-          if (p.scores) {
-            // merge taking highest
-            for (const key of Object.keys(this.scores)) {
-              if (p.scores[key] !== undefined) {
-                this.scores[key] = Math.max(this.scores[key], p.scores[key]);
-                if (this.scores[key] >= this.maxPoints[key] * 0.7) {
-                  this.completed[key] = true;
-                }
+      const res = await fetch('/api/check-re', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ re: clean, sessionId })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.authorized) {
+        this.setPlayer(data.re, data.name, data.sessionId || sessionId);
+        if (data.player && data.player.scores) {
+          for (const key of Object.keys(this.scores)) {
+            if (data.player.scores[key] !== undefined) {
+              this.scores[key] = Math.max(this.scores[key] || 0, data.player.scores[key]);
+              if (this.scores[key] >= (this.maxPoints[key] || 0) * 0.7 || data.player.completedCount >= 6) {
+                this.completed[key] = true;
               }
             }
           }
-          this.save();
-          return p;
         }
+        if (data.isCompleted) {
+          this.isSubmitted = true;
+        }
+        this.save();
+        return data;
+      } else {
+        return {
+          authorized: false,
+          error: data.error || 'Acesso não autorizado para este RE.'
+        };
       }
-    } catch (err) {
-      console.warn('Could not check existing player:', err);
+    } catch (netErr) {
+      // Static host fallback (e.g. GitHub Pages)
+      return await this.fallbackValidateRe(clean, sessionId);
     }
-    return null;
+  }
+
+  // Static/offline fallback validator reading data/employees.json
+  async fallbackValidateRe(cleanRe, sessionId) {
+    try {
+      const res = await fetch('data/employees.json');
+      if (res.ok) {
+        const list = await res.json();
+        const norm = cleanRe.toUpperCase();
+        let match = list.find(e => (e.re || '').toUpperCase() === norm);
+        if (!match && /^\d+$/.test(norm)) {
+          const padded = norm.padStart(6, '0');
+          match = list.find(e => (e.re || '').toUpperCase() === padded);
+          if (!match) {
+            const num = parseInt(norm, 10);
+            match = list.find(e => /^\d+$/.test(e.re) && parseInt(e.re, 10) === num);
+          }
+        }
+
+        if (!match) {
+          return {
+            authorized: false,
+            error: 'Acesso não autorizado: O RE informado não foi encontrado na lista oficial de colaboradores da SIPAT Manserv 2026.'
+          };
+        }
+
+        const isGeneric = (match.re || '').toUpperCase() === 'STIHL';
+        const history = JSON.parse(localStorage.getItem('sipat_history') || '[]');
+
+        if (isGeneric) {
+          const existingSession = history.find(p => (p.re || '').toUpperCase() === 'STIHL' && p.sessionId === sessionId);
+          if (existingSession) {
+            this.setPlayer(match.re, match.name, sessionId);
+            if (existingSession.scores) {
+              for (const k of Object.keys(this.scores)) {
+                if (existingSession.scores[k] !== undefined) {
+                  this.scores[k] = Math.max(this.scores[k] || 0, existingSession.scores[k]);
+                }
+              }
+            }
+            this.save();
+            return {
+              authorized: true,
+              isContinuing: true,
+              isGeneric: true,
+              re: match.re,
+              name: match.name,
+              sessionId
+            };
+          }
+
+          // New independent STIHL participant
+          this.setPlayer(match.re, match.name, sessionId);
+          return {
+            authorized: true,
+            isNew: true,
+            isGeneric: true,
+            re: match.re,
+            name: match.name,
+            sessionId,
+            message: `Bem-vindo(a)! Acesso genérico STIHL iniciado com sucesso.`
+          };
+        }
+
+        const existing = history.find(p => p.re && p.re.toUpperCase() === match.re.toUpperCase());
+
+        if (existing) {
+          if (existing.sessionId && existing.sessionId === sessionId) {
+            this.setPlayer(match.re, match.name, sessionId);
+            if (existing.scores) {
+              for (const k of Object.keys(this.scores)) {
+                if (existing.scores[k] !== undefined) {
+                  this.scores[k] = Math.max(this.scores[k] || 0, existing.scores[k]);
+                }
+              }
+            }
+            this.save();
+            return {
+              authorized: true,
+              isContinuing: true,
+              re: match.re,
+              name: match.name,
+              sessionId
+            };
+          } else {
+            return {
+              authorized: false,
+              alreadyRegistered: true,
+              error: `Acesso bloqueado: O RE ${match.re} (${match.name}) já foi registrado neste ou em outro dispositivo. Não é permitida mais de uma tentativa por colaborador.`
+            };
+          }
+        }
+
+        // New registration
+        this.setPlayer(match.re, match.name, sessionId);
+        return {
+          authorized: true,
+          isNew: true,
+          re: match.re,
+          name: match.name,
+          sessionId,
+          message: `Bem-vindo(a), ${match.name}!`
+        };
+      }
+    } catch (e) {
+      console.warn('Fallback validation error:', e);
+    }
+
+    return {
+      authorized: false,
+      error: 'Não foi possível validar o RE. Por favor, verifique a conexão com o servidor da Manserv.'
+    };
+  }
+
+  async checkExistingPlayer(identifier) {
+    return this.checkAndAuthorizeRe(identifier);
   }
 }
 

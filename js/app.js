@@ -38,7 +38,7 @@ class SipatApp {
     });
 
     document.getElementById('btn-edit-profile')?.addEventListener('click', () => {
-      this.openRegistrationModal(true);
+      this.handleProfileClick();
     });
 
     // Mobile bottom bar submit
@@ -98,57 +98,185 @@ class SipatApp {
     });
   }
 
-  checkUserRegistration() {
+  async checkUserRegistration() {
     if (!window.gameState?.hasValidPlayer()) {
       this.openRegistrationModal(false);
     } else {
-      this.updateProfileDisplay();
+      // Re-verify existing session with backend to ensure attempt lock
+      const currentRe = window.gameState.player.re;
+      const res = await window.gameState.checkAndAuthorizeRe(currentRe);
+      if (!res.authorized) {
+        window.gameState.clearPlayer();
+        this.openRegistrationModal(false, res.error);
+      } else {
+        if (res.name) {
+          window.gameState.player.name = res.name;
+          window.gameState.save();
+        }
+        this.updateProfileDisplay();
+        this.updateHubUI();
+      }
     }
   }
 
-  openRegistrationModal(isEditing = false) {
+  openRegistrationModal(isEditing = false, errorMsg = '') {
     const modal = document.getElementById('registration-modal');
     if (!modal) return;
 
+    const errorBox = document.getElementById('reg-error-box');
+    const successBox = document.getElementById('reg-success-box');
+    if (errorBox) {
+      if (errorMsg) {
+        errorBox.innerHTML = `⚠️ <strong>${errorMsg}</strong>`;
+        errorBox.classList.remove('hidden');
+      } else {
+        errorBox.classList.add('hidden');
+      }
+    }
+    if (successBox) successBox.classList.add('hidden');
+
     const reInput = document.getElementById('reg-re');
-    if (reInput) reInput.value = window.gameState?.player.re || '';
+    if (reInput) {
+      reInput.value = window.gameState?.player.re || '';
+      setTimeout(() => reInput.focus(), 150);
+    }
 
     const cancelBtn = document.getElementById('reg-btn-cancel');
     if (cancelBtn) {
-      cancelBtn.style.display = isEditing ? 'inline-block' : 'none';
+      cancelBtn.style.display = isEditing && window.gameState?.hasValidPlayer() ? 'inline-block' : 'none';
       cancelBtn.onclick = () => modal.close();
     }
 
-    modal.showModal();
+    // Prevent closing without registration
+    modal.oncancel = (e) => {
+      if (!window.gameState?.hasValidPlayer()) {
+        e.preventDefault();
+      }
+    };
+
+    if (!modal.open) {
+      modal.showModal();
+    }
   }
 
   async handleRegistrationSubmit() {
-    const re = document.getElementById('reg-re')?.value.trim();
+    const input = document.getElementById('reg-re');
+    const submitBtn = document.getElementById('reg-btn-submit');
+    const errorBox = document.getElementById('reg-error-box');
+    const successBox = document.getElementById('reg-success-box');
 
+    const re = (input?.value || '').trim();
     if (!re) {
-      alert('Por favor, informe seu RE para registrar seus pontos.');
+      if (errorBox) {
+        errorBox.innerHTML = '⚠️ <strong>Por favor, informe seu RE para acessar a SIPAT 2026.</strong>';
+        errorBox.classList.remove('hidden');
+      }
       return;
     }
 
-    window.gameState?.setPlayer(re);
+    if (errorBox) errorBox.classList.add('hidden');
+    if (successBox) successBox.classList.add('hidden');
 
-    // Check if player already had saved progress in database
-    await window.gameState?.checkExistingPlayer(re);
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Verificando lista autorizada... ⏳';
+    }
 
-    document.getElementById('registration-modal')?.close();
-    this.updateProfileDisplay();
-    this.updateHubUI();
-    window.sounds?.playCorrect();
+    const check = await window.gameState?.checkAndAuthorizeRe(re);
+
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Verificar e Iniciar Missão SIPAT ▶';
+    }
+
+    if (!check?.authorized) {
+      window.sounds?.playWrong?.();
+      if (errorBox) {
+        errorBox.innerHTML = `⚠️ <strong>${check?.error || 'Acesso não autorizado para este RE.'}</strong>`;
+        errorBox.classList.remove('hidden');
+      }
+      return;
+    }
+
+    // Authorized!
+    window.sounds?.playCorrect?.();
+    if (successBox) {
+      successBox.innerHTML = `✅ <strong>Acesso Autorizado!</strong><br>Bem-vindo(a), <strong>${check.name}</strong>.<br><small>Iniciando sua missão na SIPAT Manserv...</small>`;
+      successBox.classList.remove('hidden');
+    }
+
+    setTimeout(() => {
+      document.getElementById('registration-modal')?.close();
+      if (successBox) successBox.classList.add('hidden');
+      this.updateProfileDisplay();
+      this.updateHubUI();
+
+      if (check.isCompleted) {
+        alert(`Olá, ${check.name}! Você já concluiu sua participação na SIPAT 2026 com ${window.gameState.getTotalScore()} pontos. Confira seu certificado e o ranking!`);
+      }
+    }, 600);
+  }
+
+  handleProfileClick() {
+    if (!window.gameState?.hasValidPlayer()) {
+      this.openRegistrationModal(false);
+      return;
+    }
+
+    const player = window.gameState.player;
+    const infoModal = document.getElementById('profile-info-modal');
+    if (infoModal) {
+      const nameEl = document.getElementById('info-employee-name');
+      const reEl = document.getElementById('info-employee-re');
+      const avatarEl = document.getElementById('info-avatar-badge');
+
+      if (nameEl) nameEl.textContent = player.name || 'Colaborador Manserv';
+      if (reEl) reEl.textContent = `RE: ${player.re}`;
+      if (avatarEl) {
+        const parts = (player.name || '').trim().split(' ').filter(Boolean);
+        if (parts.length >= 2) {
+          avatarEl.textContent = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        } else if (parts.length === 1) {
+          avatarEl.textContent = parts[0].slice(0, 2).toUpperCase();
+        } else {
+          avatarEl.textContent = '👤';
+        }
+      }
+
+      infoModal.showModal();
+    }
   }
 
   updateProfileDisplay() {
     const player = window.gameState?.player;
     const nameEl = document.getElementById('profile-display-name');
     const reEl = document.getElementById('profile-display-re');
+    const avatarEl = document.getElementById('profile-avatar');
 
-    const id = player?.re || player?.email;
-    if (nameEl) nameEl.textContent = id ? `RE: ${id}` : 'Identificação';
-    if (reEl) reEl.textContent = id ? 'Colaborador Manserv' : 'Informe seu RE';
+    if (window.gameState?.hasValidPlayer()) {
+      if (nameEl) {
+        nameEl.textContent = player.name || 'Colaborador Manserv';
+        nameEl.title = `${player.name} (RE: ${player.re})`;
+      }
+      if (reEl) {
+        reEl.textContent = `RE: ${player.re}`;
+        reEl.title = `RE: ${player.re} • Autorizado ✓`;
+      }
+      if (avatarEl) {
+        const parts = (player.name || '').trim().split(' ').filter(Boolean);
+        if (parts.length >= 2) {
+          avatarEl.textContent = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        } else if (parts.length === 1) {
+          avatarEl.textContent = parts[0].slice(0, 2).toUpperCase();
+        } else {
+          avatarEl.textContent = '👤';
+        }
+      }
+    } else {
+      if (nameEl) nameEl.textContent = 'Identificação';
+      if (reEl) reEl.textContent = 'Informe seu RE';
+      if (avatarEl) avatarEl.textContent = '👤';
+    }
   }
 
   updateHubUI() {
@@ -288,7 +416,9 @@ class SipatApp {
     const completedCount = window.gameState?.getCompletedCount();
 
     const summaryRe = document.getElementById('summary-re');
-    if (summaryRe) summaryRe.textContent = player?.re || player?.email || 'Não informado';
+    if (summaryRe) {
+      summaryRe.textContent = player?.name ? `${player.name} (RE: ${player.re})` : (player?.re || 'Não informado');
+    }
 
     const summaryScore = document.getElementById('summary-total-score');
     if (summaryScore) summaryScore.textContent = `${total} / 1000 pontos`;
@@ -364,7 +494,11 @@ class SipatApp {
     const id = player?.re || player?.email;
 
     const certName = document.getElementById('cert-player-name');
-    if (certName) certName.textContent = id ? `RE: ${id}` : 'Colaborador Manserv';
+    if (certName) {
+      certName.innerHTML = player?.name 
+        ? `${player.name} <br><small style="font-size: 0.85rem; color: var(--color-primary); font-weight: 600;">RE: ${player.re}</small>`
+        : (id ? `RE: ${id}` : 'Colaborador Manserv');
+    }
 
     const certScore = document.getElementById('cert-score');
     if (certScore) certScore.textContent = `${total} PONTOS`;
@@ -410,7 +544,11 @@ class SipatApp {
           return `
             <tr class="${isCurrent ? 'current-player-row' : ''}">
               <td><strong>${rankBadge}</strong></td>
-              <td><strong>RE: ${item.re || item.email || '-'}</strong> ${isCurrent ? '<span class="you-badge">(Você)</span>' : ''}</td>
+              <td>
+                <strong>${item.name || 'Colaborador'}</strong>
+                <br><small style="color: var(--color-primary); font-weight: 600;">RE: ${item.re || '-'}</small>
+                ${isCurrent ? ' <span class="you-badge">(Você)</span>' : ''}
+              </td>
               <td>${item.completedCount}/6</td>
               <td class="text-right"><strong class="text-orange">${item.totalScore} pts</strong></td>
             </tr>
@@ -429,7 +567,11 @@ class SipatApp {
           return `
             <tr class="${isCurrent ? 'current-player-row' : ''}">
               <td><strong>${idx + 1}º</strong></td>
-              <td><strong>RE: ${item.re || item.email || '-'}</strong> ${isCurrent ? '<span class="you-badge">(Você)</span>' : ''}</td>
+              <td>
+                <strong>${item.name || 'Colaborador'}</strong>
+                <br><small style="color: var(--color-primary); font-weight: 600;">RE: ${item.re || '-'}</small>
+                ${isCurrent ? ' <span class="you-badge">(Você)</span>' : ''}
+              </td>
               <td>${item.completedCount || 0}/6</td>
               <td class="text-right"><strong class="text-orange">${item.totalScore || 0} pts</strong></td>
             </tr>
@@ -466,6 +608,8 @@ class SipatApp {
     const history = JSON.parse(localStorage.getItem('sipat_history') || '[]');
     const headers = [
       'RE',
+      'Nome_Colaborador',
+      'Setor',
       'Nivel_1_Caca_Palavras', 'Nivel_2_Forca', 'Nivel_3_Questionario',
       'Nivel_4_Tomada_Decisao', 'Nivel_5_Encontre_Riscos', 'Nivel_6_Cruzadinha',
       'Pontuacao_Total', 'Jogos_Concluidos', 'Status', 'Data_Envio'
@@ -473,6 +617,8 @@ class SipatApp {
 
     const rows = history.map(p => [
       `"${p.re || p.email || ''}"`,
+      `"${(p.name || '').replace(/"/g, '""')}"`,
+      `"${p.sector || (String(p.re).toUpperCase() === 'STIHL' ? 'STIHL' : 'Manserv')}"`,
       p.scores?.level1 || 0,
       p.scores?.level2 || 0,
       p.scores?.level3 || 0,
@@ -496,6 +642,30 @@ class SipatApp {
     document.body.removeChild(link);
   }
 
+  async resetPlayer(re) {
+    if (!re) return;
+    if (!confirm(`Tem certeza que deseja liberar o RE ${re} para um novo registro? Isso permitirá que o colaborador inicie uma nova tentativa.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/reset-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ re })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'RE liberado com sucesso!');
+        this.refreshAdminData();
+      } else {
+        alert(data.error || 'Erro ao liberar RE.');
+      }
+    } catch (err) {
+      alert('Erro de conexão com o servidor ao liberar RE.');
+    }
+  }
+
   async refreshAdminData() {
     let loadedFromServer = false;
 
@@ -513,10 +683,18 @@ class SipatApp {
         if (tbody) {
           tbody.innerHTML = (data.players || []).map(p => `
             <tr>
-              <td><strong>RE: ${p.re || p.email || '-'}</strong></td>
+              <td>
+                <strong>${p.name || 'Colaborador'}</strong>
+                <br><small style="color: var(--color-primary); font-weight: 600;">RE: ${p.re || p.email || '-'}</small>
+              </td>
               <td>${p.completedCount}/6</td>
               <td><strong class="text-orange">${p.totalScore} pts</strong></td>
               <td><small>${new Date(p.submittedAt).toLocaleString('pt-BR')}</small></td>
+              <td>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.app?.resetPlayer('${p.re}')" title="Liberar tentativa para este colaborador">
+                  🔄 Resetar
+                </button>
+              </td>
             </tr>
           `).join('');
         }
@@ -540,10 +718,14 @@ class SipatApp {
       if (tbody) {
         tbody.innerHTML = history.map(p => `
           <tr>
-            <td><strong>RE: ${p.re || p.email || '-'}</strong></td>
+            <td>
+              <strong>${p.name || 'Colaborador'}</strong>
+              <br><small style="color: var(--color-primary); font-weight: 600;">RE: ${p.re || p.email || '-'}</small>
+            </td>
             <td>${p.completedCount || 0}/6</td>
             <td><strong class="text-orange">${p.totalScore || 0} pts</strong></td>
             <td><small>${new Date(p.submittedAt || Date.now()).toLocaleString('pt-BR')}</small></td>
+            <td>-</td>
           </tr>
         `).join('');
       }
