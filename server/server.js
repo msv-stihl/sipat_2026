@@ -200,6 +200,25 @@ async function forwardToWebhook(payload) {
   }
 }
 
+// Deadline: 09/11/2026 às 00:00 (GMT-3)
+const EVENT_DEADLINE = new Date('2026-11-09T00:00:00-03:00');
+const EVENT_DEADLINE_MS = EVENT_DEADLINE.getTime();
+
+function isEventClosed() {
+  return Date.now() >= EVENT_DEADLINE_MS;
+}
+
+// GET /api/event-status - Return deadline and current event state
+app.get('/api/event-status', (req, res) => {
+  res.json({
+    deadline: '2026-11-09T00:00:00-03:00',
+    deadlineFormatted: '09/11/2026 00:00 GMT-3',
+    deadlineMs: EVENT_DEADLINE_MS,
+    isClosed: isEventClosed(),
+    now: new Date().toISOString()
+  });
+});
+
 // GET /api/employees - Return list of authorized employees
 app.get('/api/employees', (req, res) => {
   const list = loadAuthorizedEmployees();
@@ -230,6 +249,38 @@ app.post('/api/check-re', (req, res) => {
   const db = readDb();
   const clientSessionId = (sessionId || '').trim();
   const isGeneric = isGenericRe(employee.re);
+
+  // Check if event deadline has passed (09/11/2026 00:00 GMT-3)
+  if (isEventClosed()) {
+    const existing = db.find(p => {
+      if (isGeneric) {
+        return clientSessionId && isGenericRe(p.re) && p.sessionId === clientSessionId;
+      }
+      return (
+        normalizeRe(p.re) === normalizeRe(employee.re) ||
+        (findEmployee(p.re)?.re === employee.re)
+      );
+    });
+
+    if (existing) {
+      return res.json({
+        authorized: true,
+        isContinuing: true,
+        isClosed: true,
+        re: employee.re,
+        name: employee.name,
+        sessionId: existing.sessionId,
+        player: existing,
+        message: 'O período de participação nos jogos foi encerrado em 09/11/2026 às 00:00 (GMT-3). Seus dados e pontuação estão disponíveis para consulta.'
+      });
+    }
+
+    return res.status(403).json({
+      authorized: false,
+      closed: true,
+      error: 'O período de participação nos jogos da SIPAT Manserv 2026 foi encerrado em 09/11/2026 às 00:00 (GMT-3). Novos cadastros e jogos estão bloqueados.'
+    });
+  }
 
   // Special handling for generic RE (STIHL): allows multiple users simultaneously
   if (isGeneric) {
@@ -421,6 +472,15 @@ app.post('/api/save-score', (req, res) => {
 
   if (!cleanInput) {
     return res.status(400).json({ error: 'RE do colaborador é obrigatório' });
+  }
+
+  // Check if event deadline has passed (09/11/2026 00:00 GMT-3)
+  if (isEventClosed()) {
+    return res.status(403).json({
+      success: false,
+      closed: true,
+      error: 'O acesso aos jogos e o envio de pontuações foram encerrados em 09/11/2026 às 00:00 (GMT-3).'
+    });
   }
 
   // Verify RE in lista_nomes.xlsx
@@ -656,7 +716,14 @@ app.get('/api/export-csv', (req, res) => {
 
 // GET/POST Webhook and Admin Config
 app.get('/api/config', (req, res) => {
-  res.json(readConfig());
+  const cfg = readConfig();
+  res.json({
+    ...cfg,
+    deadline: '2026-11-09T00:00:00-03:00',
+    deadlineFormatted: '09/11/2026 00:00 GMT-3',
+    deadlineMs: EVENT_DEADLINE_MS,
+    isClosed: isEventClosed()
+  });
 });
 
 app.post('/api/config', (req, res) => {

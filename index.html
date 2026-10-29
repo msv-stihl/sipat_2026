@@ -92,12 +92,57 @@
         </div>
 
         <div class="hero-cta-box">
+          <!-- Countdown Timer Card (Bloqueio em 09/11/2026 00:00 GMT-3) -->
+          <div class="event-timer-card" id="event-timer-card">
+            <div class="timer-card-header">
+              <span class="timer-live-badge"><span class="timer-pulse-dot"></span> TEMPO RESTANTE</span>
+              <span class="timer-deadline-text">Até 09/11 às 00:00 (GMT-3)</span>
+            </div>
+            <div class="timer-countdown-row" id="timer-active-display">
+              <div class="timer-box">
+                <span class="timer-val" id="timer-days">--</span>
+                <span class="timer-lbl">DIAS</span>
+              </div>
+              <span class="timer-colon">:</span>
+              <div class="timer-box">
+                <span class="timer-val" id="timer-hours">--</span>
+                <span class="timer-lbl">HORAS</span>
+              </div>
+              <span class="timer-colon">:</span>
+              <div class="timer-box">
+                <span class="timer-val" id="timer-mins">--</span>
+                <span class="timer-lbl">MIN</span>
+              </div>
+              <span class="timer-colon">:</span>
+              <div class="timer-box">
+                <span class="timer-val" id="timer-secs">--</span>
+                <span class="timer-lbl">SEG</span>
+              </div>
+            </div>
+            <div class="timer-expired-banner hidden" id="timer-expired-display">
+              <div class="expired-icon">🔒</div>
+              <div class="expired-text">
+                <strong>JOGOS ENCERRADOS</strong>
+                <span>Prazo limite atingido em 09/11/2026 00:00 GMT-3.</span>
+              </div>
+            </div>
+          </div>
+
           <div class="points-reward-tag" style="margin: 0; font-size: 1rem;">
             Progresso: <span id="header-completed-badge">0 de 6 Jogos</span>
           </div>
-          <button type="button" class="btn btn-primary btn-highlight" onclick="window.app?.openSubmitModal()" style="width: 100%;">
+          <button type="button" class="btn btn-primary btn-highlight" id="hero-btn-submit" onclick="window.app?.openSubmitModal()" style="width: 100%;">
             Enviar Minha Pontuação Atual
           </button>
+        </div>
+      </div>
+
+      <!-- Games Expired Notice (Visible when 09/11/2026 00:00 GMT-3 is reached) -->
+      <div id="games-expired-notice" class="games-expired-notice hidden">
+        <div class="expired-notice-icon">🔒</div>
+        <div class="expired-notice-content">
+          <h3>Acesso aos Jogos Bloqueado</h3>
+          <p>O período de participação nos 6 desafios da SIPAT Manserv 2026 foi encerrado em <strong>09/11/2026 às 00:00 (GMT-3)</strong>. Novos jogos e envios de pontuações estão bloqueados. Os resultados registrados continuam disponíveis para consulta no ranking.</p>
         </div>
       </div>
 
@@ -345,7 +390,7 @@
       <form id="registration-form">
         <div class="form-group" style="margin-bottom: 18px;">
           <label for="reg-re" style="display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px;">RE (Registro do Empregado) *</label>
-          <input type="text" id="reg-re" class="form-input" placeholder="Digite seu RE (ex: 009120 ou 028885)" maxlength="10" autofocus required style="font-size: 1.05rem; letter-spacing: 0.05em;" />
+          <input type="text" id="reg-re" class="form-input" placeholder="Digite seu RE" maxlength="10" autofocus required style="font-size: 1.05rem; letter-spacing: 0.05em;" />
           <small style="color: var(--color-text-dim); display: block; margin-top: 6px; font-size: 0.8rem; line-height: 1.35;">
             🔒 <strong>Atenção:</strong> O acesso é verificado na lista oficial. Cada colaborador possui direito a <strong>uma única tentativa</strong>, vinculada ao seu RE.
           </small>
@@ -532,7 +577,7 @@
         <div class="cert-manserv-header">MANSERV</div>
         <div class="cert-sub">CERTIFICADO DE PARTICIPAÇÃO • SIPAT 2026</div>
         <p style="font-size: 0.95rem; color: #444;">Certificamos que o colaborador</p>
-        <h3 class="cert-main-name" id="cert-player-name">RE: 123456</h3>
+        <h3 class="cert-main-name" id="cert-player-name">Colaborador Manserv</h3>
         <p style="font-size: 0.9rem; color: #555; margin-top: 10px;">
           completou os desafios de conscientização sobre segurança e saúde ocupacional da SIPAT Manserv, totalizando:
         </p>

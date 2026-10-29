@@ -3,14 +3,76 @@ class SipatApp {
   constructor() {
     this.currentGameKey = null;
     this.gameInstances = {};
+    // Prazo final: 09/11/2026 às 00:00 (GMT-3)
+    this.DEADLINE_MS = new Date('2026-11-09T00:00:00-03:00').getTime();
+    this.timerInterval = null;
     this.init();
   }
 
   init() {
     this.bindGlobalEvents();
     this.subscribeState();
+    this.startEventTimer();
     this.checkUserRegistration();
     this.updateHubUI();
+  }
+
+  isEventExpired() {
+    return Date.now() >= this.DEADLINE_MS;
+  }
+
+  startEventTimer() {
+    const update = () => {
+      const now = Date.now();
+      const diff = this.DEADLINE_MS - now;
+
+      const activeDisplay = document.getElementById('timer-active-display');
+      const expiredDisplay = document.getElementById('timer-expired-display');
+      const expiredNotice = document.getElementById('games-expired-notice');
+      const daysEl = document.getElementById('timer-days');
+      const hoursEl = document.getElementById('timer-hours');
+      const minsEl = document.getElementById('timer-mins');
+      const secsEl = document.getElementById('timer-secs');
+
+      if (diff <= 0) {
+        if (daysEl) daysEl.textContent = '00';
+        if (hoursEl) hoursEl.textContent = '00';
+        if (minsEl) minsEl.textContent = '00';
+        if (secsEl) secsEl.textContent = '00';
+
+        if (activeDisplay) activeDisplay.classList.add('hidden');
+        if (expiredDisplay) expiredDisplay.classList.remove('hidden');
+        if (expiredNotice) expiredNotice.classList.remove('hidden');
+
+        // Retorna para o hub se um jogo estiver em andamento no momento do encerramento
+        if (this.currentGameKey) {
+          alert('🔒 O período de jogos da SIPAT Manserv foi encerrado em 09/11/2026 às 00:00 (GMT-3). O acesso aos jogos foi bloqueado.');
+          this.showHub();
+        }
+
+        this.updateHubUI();
+        return;
+      }
+
+      if (activeDisplay) activeDisplay.classList.remove('hidden');
+      if (expiredDisplay) expiredDisplay.classList.add('hidden');
+      if (expiredNotice) expiredNotice.classList.add('hidden');
+
+      const totalSeconds = Math.floor(diff / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const mins = Math.floor((totalSeconds % 3600) / 60);
+      const secs = totalSeconds % 60;
+
+      if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
+      if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+      if (minsEl) minsEl.textContent = String(mins).padStart(2, '0');
+      if (secsEl) secsEl.textContent = String(secs).padStart(2, '0');
+    };
+
+    update();
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.timerInterval = setInterval(update, 1000);
   }
 
   bindGlobalEvents() {
@@ -283,6 +345,7 @@ class SipatApp {
     const totalScore = window.gameState?.getTotalScore() || 0;
     const completedCount = window.gameState?.getCompletedCount() || 0;
     const maxScore = 1000;
+    const isExpired = this.isEventExpired();
 
     // Header score badges
     const scoreValEl = document.getElementById('header-total-score');
@@ -316,7 +379,10 @@ class SipatApp {
 
       const statusTag = card.querySelector('.card-status-pill');
       if (statusTag) {
-        if (isDone) {
+        if (isExpired) {
+          statusTag.className = 'card-status-pill status-completed';
+          statusTag.textContent = '🔒 Encerrado';
+        } else if (isDone) {
           statusTag.className = 'card-status-pill status-completed';
           statusTag.textContent = '✓ Concluído';
         } else if (score > 0) {
@@ -336,9 +402,48 @@ class SipatApp {
 
       const actionBtn = card.querySelector('.btn-card-action');
       if (actionBtn) {
-        actionBtn.textContent = isDone ? 'Revisar / Jogar ↻' : (score > 0 ? 'Continuar ▶' : 'Jogar Agora ▶');
+        if (isExpired) {
+          actionBtn.textContent = '🔒 Encerrado';
+          actionBtn.disabled = true;
+          actionBtn.classList.add('btn-disabled');
+        } else {
+          actionBtn.disabled = false;
+          actionBtn.classList.remove('btn-disabled');
+          actionBtn.textContent = isDone ? 'Revisar / Jogar ↻' : (score > 0 ? 'Continuar ▶' : 'Jogar Agora ▶');
+        }
+      }
+
+      if (isExpired) {
+        card.classList.add('card-disabled');
+        card.style.cursor = 'not-allowed';
+      } else {
+        card.classList.remove('card-disabled');
+        card.style.cursor = 'pointer';
       }
     });
+
+    // Submission buttons
+    const heroBtn = document.getElementById('hero-btn-submit');
+    const headerBtn = document.getElementById('btn-header-submit');
+    const mobileBtn = document.getElementById('btn-mobile-submit');
+
+    if (isExpired) {
+      if (heroBtn) {
+        heroBtn.disabled = true;
+        heroBtn.textContent = 'Período Encerrado 🔒';
+        heroBtn.classList.add('btn-disabled');
+      }
+      if (headerBtn) {
+        headerBtn.disabled = true;
+        headerBtn.textContent = 'Encerrado 🔒';
+        headerBtn.classList.add('btn-disabled');
+      }
+      if (mobileBtn) {
+        mobileBtn.disabled = true;
+        mobileBtn.textContent = 'Encerrado 🔒';
+        mobileBtn.classList.add('btn-disabled');
+      }
+    }
 
     this.updateProfileDisplay();
   }
@@ -359,6 +464,11 @@ class SipatApp {
   }
 
   openGame(levelKey) {
+    if (this.isEventExpired()) {
+      alert('🔒 O período de participação nos jogos da SIPAT Manserv 2026 foi encerrado em 09/11/2026 às 00:00 (GMT-3). O acesso aos jogos está bloqueado.');
+      return;
+    }
+
     if (!window.gameState?.hasValidPlayer()) {
       this.openRegistrationModal(false);
       return;
@@ -405,6 +515,11 @@ class SipatApp {
   }
 
   openSubmitModal() {
+    if (this.isEventExpired()) {
+      alert('🔒 O período para envio de pontuações nos jogos da SIPAT Manserv 2026 foi encerrado em 09/11/2026 às 00:00 (GMT-3).');
+      return;
+    }
+
     window.sounds?.playClick();
     const modal = document.getElementById('submit-results-modal');
     if (!modal) return;
