@@ -373,6 +373,19 @@ a {
   text-overflow: ellipsis;
 }
 
+.btn-header-save {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.btn-submit-text-full {
+  display: inline;
+}
+
+.btn-submit-text-short {
+  display: none;
+}
+
 /* ==========================================================================
    MAIN CONTENT & HUB
    ========================================================================== */
@@ -2218,13 +2231,182 @@ dialog::backdrop {
   }
 }
 
-@media (max-width: 480px) {
+/* Tablet & Mobile Header Optimization (keeps all elements strictly inside screen) */
+@media (max-width: 768px) {
   .app-header {
-    padding: 10px 14px;
+    padding: 8px 12px;
+    overflow: hidden;
+  }
+
+  .header-container {
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    justify-content: space-between;
+  }
+
+  .brand-section {
+    gap: 8px;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .brand-logo-badge {
+    font-size: 0.92rem;
+    padding: 4px 8px;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+  }
+
+  .brand-titles {
+    min-width: 0;
+  }
+
+  .brand-title {
+    font-size: 0.95rem;
+    white-space: nowrap;
+    gap: 4px;
   }
 
   .brand-subtitle {
     display: none;
+  }
+
+  .header-actions {
+    gap: 6px;
+    flex-shrink: 0;
+    align-items: center;
+  }
+
+  .btn-icon#btn-toggle-sound {
+    width: 34px;
+    height: 34px;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  #btn-header-admin {
+    padding: 6px 9px;
+    font-size: 0.78rem;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .user-profile-pill {
+    padding: 4px 8px;
+    gap: 6px;
+    max-width: 120px;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .user-avatar-circle {
+    width: 26px;
+    height: 26px;
+    font-size: 0.72rem;
+    flex-shrink: 0;
+  }
+
+  .user-info-text {
+    max-width: 76px;
+    min-width: 0;
+  }
+
+  .user-name {
+    font-size: 0.76rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-email-dim {
+    font-size: 0.66rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .btn-header-save {
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    gap: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .btn-submit-text-full {
+    display: none;
+  }
+
+  .btn-submit-text-short {
+    display: inline;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 8px 10px;
+  }
+
+  .header-container {
+    gap: 6px;
+  }
+
+  .brand-section {
+    gap: 6px;
+  }
+
+  .brand-logo-badge {
+    font-size: 0.88rem;
+    padding: 3px 6px;
+  }
+
+  .brand-title {
+    font-size: 0.88rem;
+  }
+
+  .header-actions {
+    gap: 5px;
+  }
+
+  .btn-icon#btn-toggle-sound {
+    width: 32px;
+    height: 32px;
+    font-size: 0.92rem;
+  }
+
+  #btn-header-admin {
+    padding: 5px 7px;
+    font-size: 0.74rem;
+  }
+
+  .user-profile-pill {
+    padding: 3px 6px;
+    gap: 5px;
+    max-width: 95px;
+  }
+
+  .user-avatar-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 0.68rem;
+  }
+
+  .user-info-text {
+    max-width: 58px;
+  }
+
+  .user-name {
+    font-size: 0.72rem;
+  }
+
+  .user-email-dim {
+    font-size: 0.62rem;
+  }
+
+  .btn-header-save {
+    padding: 6px 9px;
+    font-size: 0.78rem;
   }
 
   .games-grid {
@@ -2250,5 +2432,56 @@ dialog::backdrop {
   .cw-cell-blocked {
     width: 26px;
     height: 26px;
+  }
+}
+
+/* Ultra-compact screen adjustments (e.g. 320px - 360px) */
+@media (max-width: 360px) {
+  .app-header {
+    padding: 6px 6px;
+  }
+
+  .header-container {
+    gap: 4px;
+  }
+
+  .brand-logo-badge {
+    font-size: 0.8rem;
+    padding: 2px 5px;
+  }
+
+  .brand-title {
+    font-size: 0.82rem;
+  }
+
+  .header-actions {
+    gap: 4px;
+  }
+
+  .btn-icon#btn-toggle-sound {
+    width: 28px;
+    height: 28px;
+    font-size: 0.85rem;
+  }
+
+  .user-profile-pill {
+    padding: 2px 4px;
+    max-width: 78px;
+    gap: 4px;
+  }
+
+  .user-avatar-circle {
+    width: 22px;
+    height: 22px;
+    font-size: 0.64rem;
+  }
+
+  .user-info-text {
+    max-width: 46px;
+  }
+
+  .btn-header-save {
+    padding: 5px 8px;
+    font-size: 0.75rem;
   }
 }

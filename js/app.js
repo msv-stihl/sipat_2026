@@ -314,6 +314,15 @@ class SipatApp {
     const nameEl = document.getElementById('profile-display-name');
     const reEl = document.getElementById('profile-display-re');
     const avatarEl = document.getElementById('profile-avatar');
+    const adminBtn = document.getElementById('btn-header-admin');
+
+    // Admin restrito apenas ao RE 028885 (Wesley Manserv)
+    const currentRe = String(player?.re || '').trim();
+    const isAdmin = currentRe === '028885' || currentRe === '28885' || currentRe.replace(/^0+/, '') === '28885';
+
+    if (adminBtn) {
+      adminBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+    }
 
     if (window.gameState?.hasValidPlayer()) {
       if (nameEl) {
@@ -435,13 +444,17 @@ class SipatApp {
       }
       if (headerBtn) {
         headerBtn.disabled = true;
-        headerBtn.textContent = 'Encerrado 🔒';
+        headerBtn.innerHTML = '<span class="btn-submit-text-full">Encerrado 🔒</span><span class="btn-submit-text-short">🔒</span>';
         headerBtn.classList.add('btn-disabled');
       }
       if (mobileBtn) {
         mobileBtn.disabled = true;
         mobileBtn.textContent = 'Encerrado 🔒';
         mobileBtn.classList.add('btn-disabled');
+      }
+    } else {
+      if (headerBtn && !headerBtn.disabled) {
+        headerBtn.innerHTML = '<span class="btn-submit-text-full">Salvar Pontuação 🚀</span><span class="btn-submit-text-short">Salvar 🚀</span>';
       }
     }
 
@@ -699,6 +712,14 @@ class SipatApp {
   }
 
   async openAdminModal() {
+    const player = window.gameState?.player;
+    const currentRe = String(player?.re || '').trim();
+    const isAdmin = currentRe === '028885' || currentRe === '28885' || currentRe.replace(/^0+/, '') === '28885';
+    if (!isAdmin) {
+      alert('Acesso restrito: O painel administrativo é exclusivo para o RE 028885.');
+      return;
+    }
+
     window.sounds?.playClick();
     const modal = document.getElementById('admin-modal');
     if (!modal) return;
