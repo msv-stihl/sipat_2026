@@ -198,7 +198,7 @@ class CrosswordGame {
 
         <div class="cw-active-clue-bar">
           <span class="clue-badge">${activeWord.num} ${activeWord.dir.startsWith('H') ? 'Horizontal' : 'Vertical'}</span>
-          <span class="clue-text"><strong>${activeWord.display || activeWord.word}:</strong> ${activeWord.clue} (${activeWord.word.length} letras)</span>
+          <span class="clue-text">${activeWord.clue} (${activeWord.word.length} letras)</span>
         </div>
 
         <div class="cw-board-wrapper">
@@ -266,7 +266,7 @@ class CrosswordGame {
                 ${this.wordsDef.filter(w => w.dir.startsWith('H')).map(w => `
                   <div class="cw-clue-item ${this.activeWordId === w.id ? 'active' : ''}" data-word-id="${w.id}">
                     <span class="clue-num">${w.num}.</span>
-                    <span class="clue-txt"><strong>${w.display || w.word}:</strong> ${w.clue} (${w.word.length}L)</span>
+                    <span class="clue-txt">${w.clue} (${w.word.length}L)</span>
                   </div>
                 `).join('')}
               </div>
@@ -278,7 +278,7 @@ class CrosswordGame {
                 ${this.wordsDef.filter(w => w.dir === 'V').map(w => `
                   <div class="cw-clue-item ${this.activeWordId === w.id ? 'active' : ''}" data-word-id="${w.id}">
                     <span class="clue-num">${w.num}.</span>
-                    <span class="clue-txt"><strong>${w.display || w.word}:</strong> ${w.clue} (${w.word.length}L)</span>
+                    <span class="clue-txt">${w.clue} (${w.word.length}L)</span>
                   </div>
                 `).join('')}
               </div>
