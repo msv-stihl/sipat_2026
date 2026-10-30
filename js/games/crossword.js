@@ -2,79 +2,98 @@
 class CrosswordGame {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
-    this.rows = 14;
-    this.cols = 13;
+    this.rows = 17;
+    this.cols = 12;
     this.maxPoints = 230;
 
+    // Palavras e coordenadas fiéis ao layout de grid do usuário
     this.wordsDef = [
       {
         id: '1H',
         num: 1,
         dir: 'H',
-        word: 'ACIDENTEZERO',
-        clue: 'Meta primordial de segurança da Manserv onde nenhuma lesão ou incidente é aceitável.',
+        word: 'PREVENCAO',
+        display: 'PREVENÇÃO',
+        clue: 'Conjunto de medidas adotadas para reduzir a probabilidade de ocorrências indesejadas.',
         row: 2,
-        col: 1
-      },
-      {
-        id: '1V',
-        num: 1,
-        dir: 'V',
-        word: 'CUIDADOATIVO',
-        clue: 'Princípio comportamental de cuidar de si, cuidar do colega e permitir ser cuidado.',
-        row: 2,
-        col: 2
-      },
-      {
-        id: '2H',
-        num: 2,
-        dir: 'H',
-        word: 'AUDITORIA',
-        clue: 'Inspeção metódica das instalações e processos para certificar a conformidade das NRs.',
-        row: 5,
-        col: 0
+        col: 3
       },
       {
         id: '2V',
         num: 2,
         dir: 'V',
-        word: 'SIPAT',
-        clue: 'Sigla da Semana Interna de Prevenção de Acidentes do Trabalho.',
-        row: 4,
-        col: 3
-      },
-      {
-        id: '3H',
-        num: 3,
-        dir: 'H',
-        word: 'ALERTA',
-        clue: 'Estado de vigilância constante do colaborador para antecipar perigos operacionais.',
-        row: 9,
-        col: 2
+        word: 'CONSCIENTIZACAO',
+        display: 'CONSCIENTIZAÇÃO',
+        clue: 'Processo que ajuda as pessoas a reconhecerem os riscos e compreenderem a importância de agir com segurança.',
+        row: 2,
+        col: 9
       },
       {
         id: '3V',
         num: 3,
         dir: 'V',
-        word: 'BRIGADA',
-        clue: 'Equipe treinada para agir rapidamente em primeiros socorros e combate a incêndio.',
-        row: 1,
-        col: 11
+        word: 'INCIDENTE',
+        display: 'INCIDENTE',
+        clue: 'Ocorrência que poderia resultar ou que resultou em danos, dependendo de sua natureza e das consequências.',
+        row: 6,
+        col: 2
       },
       {
         id: '4H',
         num: 4,
-        dir: 'H',
-        word: 'LAUDO',
-        clue: 'Documento técnico e pericial conclusivo de segurança e saúde ocupacional.',
+        dir: 'H_REV', // Horizontal da direita para a esquerda (I -> S -> O -> L -> A -> M -> E -> N -> T -> O)
+        word: 'ISOLAMENTO',
+        display: 'ISOLAMENTO',
+        clue: 'Medida que impede ou limita o acesso a uma área de risco.',
+        row: 7,
+        col: 9
+      },
+      {
+        id: '5V',
+        num: 5,
+        dir: 'V',
+        word: 'AVENTAL',
+        display: 'AVENTAL',
+        clue: 'Vestimenta de proteção utilizada para proteger o corpo contra riscos específicos.',
+        row: 1,
+        col: 6
+      },
+      {
+        id: '6V',
+        num: 6,
+        dir: 'V',
+        word: 'CORRIMAO',
+        display: 'CORRIMÃO',
+        clue: 'Estrutura que oferece apoio às mãos durante o deslocamento em escadas e rampas.',
         row: 6,
-        col: 8
+        col: 7
+      },
+      {
+        id: '7V',
+        num: 7,
+        dir: 'V',
+        word: 'PT',
+        display: 'PT',
+        clue: 'Sigla de um documento que autoriza formalmente determinadas atividades de risco, conforme procedimento estabelecido.',
+        row: 6,
+        col: 1
       }
+    ];
+
+    // Células de numeração em destaque laranja adjacentes às palavras (layout idêntico ao modelo)
+    this.badgeCells = [
+      { num: 1, r: 2, c: 2, wordId: '1H' },
+      { num: 2, r: 1, c: 9, wordId: '2V' },
+      { num: 3, r: 5, c: 2, wordId: '3V' },
+      { num: 4, r: 7, c: 10, wordId: '4H' },
+      { num: 5, r: 0, c: 6, wordId: '5V' },
+      { num: 6, r: 5, c: 7, wordId: '6V' },
+      { num: 7, r: 5, c: 1, wordId: '7V' }
     ];
 
     this.userGrid = {}; // 'r,c' -> letter
     this.activeWordId = '1H';
-    this.activeCell = { r: 2, c: 1 };
+    this.activeCell = { r: 2, c: 3 };
     this.isVerified = false;
     this.hiddenInput = null;
   }
@@ -83,19 +102,28 @@ class CrosswordGame {
     this.removeHiddenInput();
     this.userGrid = {};
     this.activeWordId = '1H';
-    this.activeCell = { r: 2, c: 1 };
+    this.activeCell = { r: 2, c: 3 };
     this.isVerified = false;
     this.render();
   }
 
-  // Build map of valid cells: 'r,c' -> { expected: char, numberLabel: 1..4, words: ['1H', ...] }
+  // Mapeamento de células válidas: 'r,c' -> { expected: char, words: ['1H', ...] }
   getValidCellsMap() {
     const map = {};
 
     for (const w of this.wordsDef) {
       for (let i = 0; i < w.word.length; i++) {
-        const r = w.dir === 'H' ? w.row : w.row + i;
-        const c = w.dir === 'H' ? w.col + i : w.col;
+        let r = w.row;
+        let c = w.col;
+
+        if (w.dir === 'H') {
+          c = w.col + i;
+        } else if (w.dir === 'H_REV') {
+          c = w.col - i;
+        } else if (w.dir === 'V') {
+          r = w.row + i;
+        }
+
         const key = `${r},${c}`;
 
         if (!map[key]) {
@@ -160,17 +188,17 @@ class CrosswordGame {
             </div>
           </div>
           <p class="game-desc">
-            Resolva as <strong>7 palavras cruzadas</strong> sobre procedimentos e normas de segurança. Toque nas pistas ou nas casas para preencher!
+            Resolva as <strong>7 palavras cruzadas</strong> sobre procedimentos e normas de segurança. Toque nas pistas, números ou casas para preencher!
           </p>
           <div class="game-stats-bar">
-            <span>Pista Ativa: <strong>${activeWord.num} ${activeWord.dir === 'H' ? 'Horizontal' : 'Vertical'}</strong></span>
+            <span>Pista Ativa: <strong>${activeWord.num} ${activeWord.dir.startsWith('H') ? 'Horizontal' : 'Vertical'}</strong></span>
             <span>Pontuação Atual: <strong>${score} / ${this.maxPoints} pts</strong></span>
           </div>
         </div>
 
         <div class="cw-active-clue-bar">
-          <span class="clue-badge">${activeWord.num} ${activeWord.dir === 'H' ? 'Horizontal' : 'Vertical'}</span>
-          <span class="clue-text">${activeWord.clue} (${activeWord.word.length} letras)</span>
+          <span class="clue-badge">${activeWord.num} ${activeWord.dir.startsWith('H') ? 'Horizontal' : 'Vertical'}</span>
+          <span class="clue-text"><strong>${activeWord.display || activeWord.word}:</strong> ${activeWord.clue} (${activeWord.word.length} letras)</span>
         </div>
 
         <div class="cw-board-wrapper">
@@ -178,8 +206,19 @@ class CrosswordGame {
             ${Array.from({ length: this.rows }).map((_, r) =>
               Array.from({ length: this.cols }).map((_, c) => {
                 const key = `${r},${c}`;
-                const cellInfo = validCells[key];
 
+                // Verifica se é uma das caixas laranjas de numeração (conforme layout do usuário)
+                const badge = this.badgeCells.find(b => b.r === r && b.c === c);
+                if (badge) {
+                  const isBadgeActive = this.activeWordId === badge.wordId;
+                  return `
+                    <button type="button" class="cw-badge-cell ${isBadgeActive ? 'badge-active' : ''}" data-word-id="${badge.wordId}" id="cw-badge-${badge.num}" title="Selecionar Palavra ${badge.num}">
+                      ${badge.num}
+                    </button>
+                  `;
+                }
+
+                const cellInfo = validCells[key];
                 if (!cellInfo) {
                   return `<div class="cw-cell-blocked"></div>`;
                 }
@@ -197,7 +236,6 @@ class CrosswordGame {
 
                 return `
                   <button type="button" class="${cellClass}" data-r="${r}" data-c="${c}" id="cw-cell-${r}-${c}">
-                    ${cellInfo.number ? `<span class="cw-num">${cellInfo.number}</span>` : ''}
                     <span class="cw-val">${val}</span>
                   </button>
                 `;
@@ -225,10 +263,10 @@ class CrosswordGame {
             <div class="cw-clues-col">
               <h4>Horizontais:</h4>
               <div class="cw-clue-list">
-                ${this.wordsDef.filter(w => w.dir === 'H').map(w => `
+                ${this.wordsDef.filter(w => w.dir.startsWith('H')).map(w => `
                   <div class="cw-clue-item ${this.activeWordId === w.id ? 'active' : ''}" data-word-id="${w.id}">
                     <span class="clue-num">${w.num}.</span>
-                    <span class="clue-txt">${w.clue} (${w.word.length}L)</span>
+                    <span class="clue-txt"><strong>${w.display || w.word}:</strong> ${w.clue} (${w.word.length}L)</span>
                   </div>
                 `).join('')}
               </div>
@@ -240,7 +278,7 @@ class CrosswordGame {
                 ${this.wordsDef.filter(w => w.dir === 'V').map(w => `
                   <div class="cw-clue-item ${this.activeWordId === w.id ? 'active' : ''}" data-word-id="${w.id}">
                     <span class="clue-num">${w.num}.</span>
-                    <span class="clue-txt">${w.clue} (${w.word.length}L)</span>
+                    <span class="clue-txt"><strong>${w.display || w.word}:</strong> ${w.clue} (${w.word.length}L)</span>
                   </div>
                 `).join('')}
               </div>
@@ -268,7 +306,23 @@ class CrosswordGame {
   attachEvents() {
     const validCells = this.getValidCellsMap();
 
-    // Cell clicks
+    // Cliques nas caixas laranjas de numeração
+    const badgeBtns = this.container.querySelectorAll('.cw-badge-cell');
+    badgeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const wordId = btn.dataset.wordId;
+        const w = this.wordsDef.find(x => x.id === wordId);
+        if (w) {
+          window.sounds?.playClick();
+          this.activeWordId = wordId;
+          this.activeCell = { r: w.row, c: w.col };
+          this.enableMobileKeyboard();
+          this.render();
+        }
+      });
+    });
+
+    // Cliques nas casas de letras
     const cells = this.container.querySelectorAll('.cw-cell');
     cells.forEach(c => {
       c.addEventListener('click', () => {
@@ -281,7 +335,7 @@ class CrosswordGame {
         window.sounds?.playClick();
         this.activeCell = { r, c: col };
 
-        // Toggle direction if already in the word
+        // Alterna direção caso a célula pertença a mais de uma palavra
         if (info.words.length > 1 && info.words.includes(this.activeWordId)) {
           this.activeWordId = info.words.find(w => w !== this.activeWordId);
         } else if (info.words.length > 0 && !info.words.includes(this.activeWordId)) {
@@ -293,7 +347,7 @@ class CrosswordGame {
       });
     });
 
-    // Clue clicks
+    // Cliques nas dicas de texto
     const clueItems = this.container.querySelectorAll('.cw-clue-item');
     clueItems.forEach(item => {
       item.addEventListener('click', () => {
@@ -309,7 +363,7 @@ class CrosswordGame {
       });
     });
 
-    // Virtual Keyboard
+    // Teclado virtual na tela
     const kbBtns = this.container.querySelectorAll('.cw-kb-btn');
     kbBtns.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -318,17 +372,19 @@ class CrosswordGame {
       });
     });
 
-    // Physical Keyboard (desktop ou celular com o input oculto focado)
+    // Teclado físico desktop
     const keyHandler = (e) => {
-      // Only process when crossword is in DOM
       if (!document.getElementById('cw-btn-verify')) return;
-      // Eventos vindos do input oculto já são tratados no próprio input
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
 
       if (e.key === 'Backspace') {
         this.handleKeyPress('BACKSPACE');
-      } else if (/^[a-zA-Z]$/.test(e.key)) {
-        this.handleKeyPress(e.key.toUpperCase());
+      } else if (e.key && e.key.length === 1) {
+        // Normaliza caracteres com acentos (ex: ç -> C, ã -> A)
+        const norm = e.key.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+        if (/^[A-Z]$/.test(norm)) {
+          this.handleKeyPress(norm);
+        }
       }
     };
     window.onkeydown = keyHandler;
@@ -350,7 +406,7 @@ class CrosswordGame {
     }
   }
 
-  // Input invisível que abre o teclado nativo do celular ao selecionar uma palavra/casa
+  // Input invisível para acionar o teclado nativo de celulares
   enableMobileKeyboard() {
     if (!this.hiddenInput || !this.hiddenInput.isConnected) {
       const input = document.createElement('input');
@@ -366,7 +422,8 @@ class CrosswordGame {
 
       input.addEventListener('input', () => {
         if (!document.getElementById('cw-btn-verify')) return;
-        const typed = input.value.toUpperCase().replace(/[^A-Z]/g, '');
+        const norm = input.value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+        const typed = norm.replace(/[^A-Z]/g, '');
         input.value = '';
         for (const char of typed) {
           this.handleKeyPress(char);
@@ -429,11 +486,27 @@ class CrosswordGame {
     if (!currentWord || !this.activeCell) return;
 
     const { r, c } = this.activeCell;
-    const nextR = currentWord.dir === 'H' ? r : r + delta;
-    const nextC = currentWord.dir === 'H' ? c + delta : c;
+    let nextR = r;
+    let nextC = c;
 
-    // Check if within bounds of word
-    const idxInWord = currentWord.dir === 'H' ? nextC - currentWord.col : nextR - currentWord.row;
+    if (currentWord.dir === 'H') {
+      nextC = c + delta;
+    } else if (currentWord.dir === 'H_REV') {
+      nextC = c - delta;
+    } else if (currentWord.dir === 'V') {
+      nextR = r + delta;
+    }
+
+    // Verifica limites dentro da palavra ativa
+    let idxInWord = 0;
+    if (currentWord.dir === 'H') {
+      idxInWord = nextC - currentWord.col;
+    } else if (currentWord.dir === 'H_REV') {
+      idxInWord = currentWord.col - nextC;
+    } else if (currentWord.dir === 'V') {
+      idxInWord = nextR - currentWord.row;
+    }
+
     if (idxInWord >= 0 && idxInWord < currentWord.word.length) {
       this.activeCell = { r: nextR, c: nextC };
     }

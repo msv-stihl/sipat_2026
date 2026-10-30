@@ -1837,6 +1837,37 @@ button:disabled {
   background: transparent;
 }
 
+/* Orange Number Badge Cell (matches user Excel layout) */
+.cw-badge-cell {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  background: #ff5722;
+  background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%);
+  color: #ffffff;
+  border: 1px solid #d84315;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  transition: var(--transition);
+}
+
+.cw-badge-cell:hover,
+.cw-badge-cell.badge-active {
+  background: linear-gradient(135deg, #ff7043 0%, #f4511e 100%);
+  border-color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 0 12px rgba(255, 87, 34, 0.9);
+  z-index: 6;
+}
+
 .cw-cell.cell-active {
   background: #ffe0b2;
   border: 2px solid var(--color-primary);
@@ -2477,6 +2508,12 @@ dialog::backdrop {
   .cw-cell-blocked {
     width: 26px;
     height: 26px;
+  }
+
+  .cw-badge-cell {
+    width: 26px;
+    height: 26px;
+    font-size: 0.85rem;
   }
 }
 
