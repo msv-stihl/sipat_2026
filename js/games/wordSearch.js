@@ -129,8 +129,15 @@ class WordSearchGame {
     this.container.innerHTML = `
       <div class="game-wrapper wordsearch-layout">
         <div class="game-intro">
-          <div class="game-badge">NÍVEL 1 • FÁCIL</div>
-          <h2>Caça-Palavras da Prevenção</h2>
+          <div class="game-intro-header">
+            <div class="game-intro-icon-box">
+              <img src="assets/icons/level1.png" alt="Caça-Palavras" />
+            </div>
+            <div>
+              <div class="game-badge">NÍVEL 1 • FÁCIL</div>
+              <h2>Caça-Palavras da Prevenção</h2>
+            </div>
+          </div>
           <p class="game-desc">
             Encontre as <strong>6 palavras</strong> essenciais para a cultura de segurança Manserv escondidas no diagrama. Arraste ou toque na primeira e última letra da palavra!
           </p>

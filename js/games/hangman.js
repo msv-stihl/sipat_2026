@@ -85,8 +85,15 @@ class HangmanGame {
     this.container.innerHTML = `
       <div class="game-wrapper hangman-layout">
         <div class="game-intro">
-          <div class="game-badge">NÍVEL 2 • FÁCIL / MÉDIO</div>
-          <h2>Jogo da Forca da Segurança</h2>
+          <div class="game-intro-header">
+            <div class="game-intro-icon-box">
+              <img src="assets/icons/level2.png" alt="Jogo da Forca" />
+            </div>
+            <div>
+              <div class="game-badge">NÍVEL 2 • FÁCIL / MÉDIO</div>
+              <h2>Jogo da Forca da Segurança</h2>
+            </div>
+          </div>
           <p class="game-desc">
             Descubra as <strong>3 expressões</strong> fundamentais para a SIPAT Manserv. Cada rodada correta vale 40 pontos!
           </p>

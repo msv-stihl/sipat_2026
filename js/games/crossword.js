@@ -150,8 +150,15 @@ class CrosswordGame {
     this.container.innerHTML = `
       <div class="game-wrapper crossword-layout">
         <div class="game-intro">
-          <div class="game-badge">NÍVEL 6 • MUITO DIFÍCIL</div>
-          <h2>Cruzadinha SIPAT Manserv</h2>
+          <div class="game-intro-header">
+            <div class="game-intro-icon-box">
+              <img src="assets/icons/level6.png" alt="Cruzadinha SIPAT" />
+            </div>
+            <div>
+              <div class="game-badge">NÍVEL 6 • MUITO DIFÍCIL</div>
+              <h2>Cruzadinha SIPAT Manserv</h2>
+            </div>
+          </div>
           <p class="game-desc">
             Resolva as <strong>7 palavras cruzadas</strong> sobre procedimentos e normas de segurança. Toque nas pistas ou nas casas para preencher!
           </p>

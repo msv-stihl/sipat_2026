@@ -136,8 +136,15 @@ class QuizGame {
     this.container.innerHTML = `
       <div class="game-wrapper quiz-layout">
         <div class="game-intro">
-          <div class="game-badge">NÍVEL 3 • MÉDIO</div>
-          <h2>Questionário de Segurança Operacional</h2>
+          <div class="game-intro-header">
+            <div class="game-intro-icon-box">
+              <img src="assets/icons/level3.png" alt="Questionário" />
+            </div>
+            <div>
+              <div class="game-badge">NÍVEL 3 • MÉDIO</div>
+              <h2>Questionário de Segurança Operacional</h2>
+            </div>
+          </div>
           <p class="game-desc">
             Responda às 5 perguntas sobre segurança no dia a dia. <strong>Você precisa acertar pelo menos 4 das 5 perguntas para ser aprovado!</strong>
           </p>

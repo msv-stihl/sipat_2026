@@ -81,8 +81,15 @@ class HazardHunterGame {
     this.container.innerHTML = `
       <div class="game-wrapper hazard-layout">
         <div class="game-intro">
-          <div class="game-badge">NÍVEL 5 • DIFÍCIL</div>
-          <h2>Encontre os Riscos Operacionais</h2>
+          <div class="game-intro-header">
+            <div class="game-intro-icon-box">
+              <img src="assets/icons/level5.png" alt="Encontre os Riscos" />
+            </div>
+            <div>
+              <div class="game-badge">NÍVEL 5 • DIFÍCIL</div>
+              <h2>Encontre os Riscos Operacionais</h2>
+            </div>
+          </div>
           <p class="game-desc">
             Toque diretamente na imagem para identificar os <strong>5 perigos ocultos</strong> na planta industrial. Você tem exatamente <strong>8 chances</strong> no total!
           </p>

@@ -163,8 +163,15 @@ class DecisionGame {
     this.container.innerHTML = `
       <div class="game-wrapper decision-layout">
         <div class="game-intro">
-          <div class="game-badge">NÍVEL 4 • MÉDIO / AVANÇADO</div>
-          <h2>Tomada de Decisão em Campo</h2>
+          <div class="game-intro-header">
+            <div class="game-intro-icon-box">
+              <img src="assets/icons/level4.png" alt="Tomada de Decisão" />
+            </div>
+            <div>
+              <div class="game-badge">NÍVEL 4 • MÉDIO / AVANÇADO</div>
+              <h2>Tomada de Decisão em Campo</h2>
+            </div>
+          </div>
           <p class="game-desc">
             Coloque em prática as <strong>Regras que Salvam Vidas</strong> da Manserv em 3 situações reais de campo. Cada decisão correta vale 60 pontos!
           </p>

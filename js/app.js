@@ -570,7 +570,12 @@ class SipatApp {
         const isDone = window.gameState?.completed[lvl.key];
         return `
           <tr>
-            <td><strong>${lvl.name}</strong></td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="assets/icons/${lvl.key}.png" alt="${lvl.name}" style="width: 28px; height: 28px; object-fit: contain; flex-shrink: 0;" />
+                <strong>${lvl.name}</strong>
+              </div>
+            </td>
             <td>${isDone ? '<span class="text-success">Concluído</span>' : (score > 0 ? '<span class="text-warning">Em Andamento</span>' : '<span class="text-dim">Pendente</span>')}</td>
             <td class="text-right"><strong>${score}</strong> / ${lvl.max} pts</td>
           </tr>
