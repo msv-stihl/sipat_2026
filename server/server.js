@@ -595,6 +595,13 @@ app.post('/api/save-score', (req, res) => {
   }
 });
 
+// POST /api/admin/reset-all - Wipe all participant records and reset database
+app.post('/api/admin/reset-all', (req, res) => {
+  writeDb([]);
+  console.log('🧹 Todos os registros de participantes foram resetados pelo administrador.');
+  res.json({ success: true, message: 'Todos os dados do servidor foram limpos e os REs foram resetados com sucesso.' });
+});
+
 // POST /api/admin/reset-player - Allow admin to release/reset an RE
 app.post('/api/admin/reset-player', (req, res) => {
   const { re, sessionId } = req.body;

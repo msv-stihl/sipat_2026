@@ -783,6 +783,33 @@ class SipatApp {
     document.body.removeChild(link);
   }
 
+  async resetAllData() {
+    if (!confirm('⚠️ ATENÇÃO: Tem certeza que deseja LIMPAR TODOS OS DADOS do servidor e resetar TODOS os REs participantes?\n\nEssa ação irá zerar o banco de dados para o início oficial do evento.')) {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/reset-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Todos os dados foram resetados!');
+      } else {
+        alert(data.error || 'Erro ao resetar dados.');
+      }
+    } catch (err) {
+      console.warn('Erro ao conectar ao servidor para reset-all:', err);
+      alert('Aviso: Servidor não respondeu. Histórico local foi limpo.');
+    }
+
+    localStorage.removeItem('sipat_history');
+    window.gameState?.resetAllLocal();
+    this.refreshAdminData();
+    this.updateHubUI();
+  }
+
   async resetPlayer(re) {
     if (!re) return;
     if (!confirm(`Tem certeza que deseja liberar o RE ${re} para um novo registro? Isso permitirá que o colaborador inicie uma nova tentativa.`)) {

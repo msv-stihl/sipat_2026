@@ -522,12 +522,17 @@
         </div>
       </div>
 
-      <!-- Export CSV -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <!-- Export CSV & Admin Actions -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
         <h4>Submissões Registradas:</h4>
-        <a href="/api/export-csv" class="btn btn-primary btn-sm" id="btn-export-csv" download>
-          📥 Exportar para Excel/CSV
-        </a>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-admin-reset-all" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" onclick="window.app?.resetAllData()" title="Limpar todos os participantes e zerar o banco">
+            🗑️ Limpar Todos os Registros
+          </button>
+          <a href="/api/export-csv" class="btn btn-primary btn-sm" id="btn-export-csv" download>
+            📥 Exportar para Excel/CSV
+          </a>
+        </div>
       </div>
 
       <div style="max-height: 260px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin-bottom: 20px;">
@@ -538,6 +543,7 @@
               <th>Jogos</th>
               <th>Pontuação</th>
               <th>Data</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody id="admin-players-tbody"></tbody>

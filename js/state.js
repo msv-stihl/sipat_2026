@@ -1,8 +1,10 @@
 // Global State Management for SIPAT MANSERV 2026
-const STATE_STORAGE_KEY = 'manserv_sipat_2026_state_v1';
+const STATE_STORAGE_KEY = 'manserv_sipat_2026_state_v2';
+const LAUNCH_RESET_KEY = 'manserv_sipat_launch_reset_20261103';
 
 class GameState {
   constructor() {
+    this.checkLaunchReset();
     this.maxPoints = {
       level1: 100, // Caça-Palavras
       level2: 120, // Forca
@@ -53,6 +55,37 @@ class GameState {
 
     this.listeners = [];
     this.load();
+  }
+
+  checkLaunchReset() {
+    try {
+      if (localStorage.getItem(LAUNCH_RESET_KEY) !== '20261103') {
+        localStorage.removeItem('manserv_sipat_2026_state_v1');
+        localStorage.removeItem('manserv_sipat_2026_state_v2');
+        localStorage.removeItem('sipat_session_id');
+        localStorage.removeItem('sipat_history');
+        localStorage.setItem(LAUNCH_RESET_KEY, '20261103');
+      }
+    } catch (e) {
+      console.warn('Launch reset check failed:', e);
+    }
+  }
+
+  resetAllLocal() {
+    try {
+      localStorage.removeItem(STATE_STORAGE_KEY);
+      localStorage.removeItem('sipat_session_id');
+      localStorage.removeItem('sipat_history');
+      this.player = { re: '', email: '', name: '', sector: '', sessionId: '' };
+      for (const k of Object.keys(this.scores)) this.scores[k] = 0;
+      for (const k of Object.keys(this.completed)) this.completed[k] = false;
+      for (const k of Object.keys(this.gameDetails)) this.gameDetails[k] = null;
+      this.isSubmitted = false;
+      this.lastSubmittedAt = null;
+      this.save();
+    } catch (e) {
+      console.warn('Local reset error:', e);
+    }
   }
 
   getSessionId() {
