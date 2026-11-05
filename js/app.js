@@ -312,6 +312,16 @@ class SipatApp {
     }
   }
 
+  promptSwitchAccount() {
+    if (confirm('Deseja realmente sair e trocar de RE neste dispositivo?')) {
+      document.getElementById('profile-info-modal')?.close();
+      window.gameState?.clearPlayer();
+      this.updateProfileDisplay();
+      this.updateHubUI();
+      this.openRegistrationModal(false);
+    }
+  }
+
   updateProfileDisplay() {
     const player = window.gameState?.player;
     const nameEl = document.getElementById('profile-display-name');
@@ -758,7 +768,6 @@ class SipatApp {
       } else if (tbody) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Você é o primeiro participante! Complete um jogo para registrar sua pontuação.</td></tr>`;
       }
-    }
   }
 
   async openAdminModal() {
