@@ -550,16 +550,24 @@
         </table>
       </div>
 
-      <!-- Webhook Forwarding Config -->
+      <!-- Google Sheets / Webhook Integration -->
       <div style="background: var(--color-surface-alt); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--color-border);">
-        <h4 style="font-size: 0.95rem; margin-bottom: 6px;">Integração Webhook (Google Sheets / Power Automate)</h4>
-        <p style="font-size: 0.8rem; color: var(--color-text-dim); margin-bottom: 12px;">
-          Insira uma URL de Webhook para receber automaticamente todas as pontuações na sua planilha ou sistema de RH/Segurança:
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+          <h4 style="font-size: 0.95rem; margin: 0;">📊 Planilha Google Sheets (Salvamento em Tempo Real)</h4>
+          <span id="webhook-status-badge" style="font-size: 0.75rem; padding: 2px 8px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.08); color: var(--color-text-dim);">
+            🟡 Verificando...
+          </span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--color-text-dim); margin-bottom: 12px; line-height: 1.4;">
+          Para salvar automaticamente todas as respostas e pontuações de todos os celulares em uma planilha sua do Google Sheets, cole abaixo a URL do Webhook (App da Web) gerada pelo Google Apps Script:
         </p>
-        <form id="admin-webhook-form" style="display: flex; gap: 10px;">
-          <input type="url" id="admin-webhook-url" class="form-input" placeholder="https://script.google.com/macros/s/.../exec" style="flex: 1;" />
-          <button type="submit" class="btn btn-secondary btn-sm">Salvar Webhook</button>
+        <form id="admin-webhook-form" style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <input type="url" id="admin-webhook-url" class="form-input" placeholder="https://script.google.com/macros/s/.../exec" style="flex: 1; min-width: 260px;" />
+          <button type="submit" class="btn btn-primary btn-sm">Salvar Planilha</button>
         </form>
+        <p style="font-size: 0.74rem; color: var(--color-text-dim); margin-top: 8px; margin-bottom: 0;">
+          💡 <em>O código pronto do script está no arquivo <code>scripts/google_sheets_integration.js</code>. Leva 1 minuto para ativar!</em>
+        </p>
       </div>
 
       <div class="modal-actions">

@@ -53,8 +53,24 @@ class GameState {
     this.isSubmitted = false;
     this.lastSubmittedAt = null;
 
+    this.webhookUrl = '';
     this.listeners = [];
     this.load();
+    this.loadConfig();
+  }
+
+  async loadConfig() {
+    try {
+      const res = await fetch('data/config.json');
+      if (res.ok) {
+        const cfg = await res.json();
+        if (cfg.webhookUrl) {
+          this.webhookUrl = cfg.webhookUrl;
+        }
+      }
+    } catch (e) {
+      console.warn('Config load fallback:', e);
+    }
   }
 
   checkLaunchReset() {
@@ -243,8 +259,8 @@ class GameState {
     this.saveLocalRecord(payload);
 
     // Direct client webhook dispatch if configured (e.g. Google Sheets on GitHub Pages)
-    const customWebhook = localStorage.getItem('sipat_webhook_url');
-    if (customWebhook && isFinalSubmission) {
+    const customWebhook = this.webhookUrl || localStorage.getItem('sipat_webhook_url');
+    if (customWebhook) {
       try {
         fetch(customWebhook, {
           method: 'POST',

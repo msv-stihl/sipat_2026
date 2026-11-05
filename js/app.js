@@ -177,6 +177,9 @@ class SipatApp {
         }
         this.updateProfileDisplay();
         this.updateHubUI();
+        if (window.gameState.getTotalScore() > 0) {
+          window.gameState.syncWithBackend(Boolean(window.gameState.isSubmitted));
+        }
       }
     }
   }
@@ -899,28 +902,62 @@ class SipatApp {
       }
     }
 
-    // Load config webhook (server or localStorage)
+    // Load config webhook (server, config.json or localStorage)
     const input = document.getElementById('admin-webhook-url');
+    const badge = document.getElementById('webhook-status-badge');
     if (input) {
-      const localWebhook = localStorage.getItem('sipat_webhook_url') || '';
-      input.value = localWebhook;
+      let activeWebhook = window.gameState?.webhookUrl || localStorage.getItem('sipat_webhook_url') || '';
+      input.value = activeWebhook;
 
       try {
         const cfgRes = await fetch('/api/config');
         if (cfgRes.ok) {
           const cfg = await cfgRes.json();
-          if (cfg.webhookUrl) input.value = cfg.webhookUrl;
+          if (cfg.webhookUrl) activeWebhook = cfg.webhookUrl;
+        } else {
+          const staticCfg = await fetch('data/config.json');
+          if (staticCfg.ok) {
+            const cfg = await staticCfg.json();
+            if (cfg.webhookUrl) activeWebhook = cfg.webhookUrl;
+          }
         }
-      } catch (err) {}
+      } catch (err) {
+        try {
+          const staticCfg = await fetch('data/config.json');
+          if (staticCfg.ok) {
+            const cfg = await staticCfg.json();
+            if (cfg.webhookUrl) activeWebhook = cfg.webhookUrl;
+          }
+        } catch (e) {}
+      }
+
+      input.value = activeWebhook;
+      if (window.gameState) window.gameState.webhookUrl = activeWebhook;
+
+      if (badge) {
+        if (activeWebhook) {
+          badge.textContent = '🟢 Planilha Conectada';
+          badge.style.color = '#00e676';
+          badge.style.background = 'rgba(0, 230, 118, 0.15)';
+        } else {
+          badge.textContent = '🟡 Nenhuma Planilha Conectada';
+          badge.style.color = '#ffab00';
+          badge.style.background = 'rgba(255, 171, 0, 0.15)';
+        }
+      }
     }
   }
 
   async saveWebhookUrl() {
     const input = document.getElementById('admin-webhook-url');
+    const badge = document.getElementById('webhook-status-badge');
     const url = input?.value.trim() || '';
 
-    // Always save in localStorage for GitHub Pages
+    // Always save in localStorage for client
     localStorage.setItem('sipat_webhook_url', url);
+    if (window.gameState) {
+      window.gameState.webhookUrl = url;
+    }
 
     try {
       await fetch('/api/config', {
@@ -930,7 +967,23 @@ class SipatApp {
       });
     } catch {}
 
-    alert('URL de Webhook configurada com sucesso! As pontuações serão encaminhadas.');
+    if (badge) {
+      if (url) {
+        badge.textContent = '🟢 Planilha Conectada';
+        badge.style.color = '#00e676';
+        badge.style.background = 'rgba(0, 230, 118, 0.15)';
+      } else {
+        badge.textContent = '🟡 Nenhuma Planilha Conectada';
+        badge.style.color = '#ffab00';
+        badge.style.background = 'rgba(255, 171, 0, 0.15)';
+      }
+    }
+
+    if (url) {
+      alert('Planilha conectada com sucesso! As notas e respostas agora serão salvas em tempo real.');
+    } else {
+      alert('URL removida.');
+    }
   }
 }
 
