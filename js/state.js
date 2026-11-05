@@ -53,7 +53,7 @@ class GameState {
     this.isSubmitted = false;
     this.lastSubmittedAt = null;
 
-    this.webhookUrl = '';
+    this.webhookUrl = 'https://script.google.com/macros/s/AKfycbyvvAec6GW78pH8xvDoB2MuW3vJE74Nb9uYVGwF1-XVICYNr4gkHp6q2nmRhaRlcqNS/exec';
     this.listeners = [];
     this.load();
     this.loadConfig();

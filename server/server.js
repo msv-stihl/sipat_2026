@@ -130,7 +130,7 @@ function initDb() {
       CONFIG_PATH,
       JSON.stringify(
         {
-          webhookUrl: '',
+          webhookUrl: 'https://script.google.com/macros/s/AKfycbyvvAec6GW78pH8xvDoB2MuW3vJE74Nb9uYVGwF1-XVICYNr4gkHp6q2nmRhaRlcqNS/exec',
           eventName: 'SIPAT MANSERV 2026',
           maxPoints: 1000
         },
