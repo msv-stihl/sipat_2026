@@ -22,15 +22,23 @@ Como o site está publicado no **GitHub Pages** (hospedagem gratuita na nuvem), 
 ---
 
 ### 3. Publicar o Webhook (App da Web)
-1. No canto superior direito da tela do Apps Script, clique no botão azul **Implantar** (ou *Deploy*) > **Nova implantação**.
+1. No canto superior direito da tela do Apps Script, clique no botão azul **Implantar** (ou *Deploy*) > **Nova implantação** (ou se já tiver criado, **Gerenciar implantações** > Editar > **Nova versão**).
 2. Na engrenagem ao lado de *Selecionar tipo*, escolha **App da Web** (*Web app*).
 3. Preencha as configurações:
-   - **Descrição:** `SIPAT 2026`
+   - **Descrição:** `SIPAT 2026 - Nuvem e Bloqueio de Tentativas`
    - **Executar como:** `Eu (seu e-mail)`
-   - **Quem pode acessar:** `Qualquer pessoa` *(ESSENCIAL: para que os celulares dos colaboradores consigam enviar as respostas)*.
+   - **Quem pode acessar:** `Qualquer pessoa` *(ESSENCIAL: para que os celulares dos colaboradores consigam consultar e enviar as respostas)*.
 4. Clique no botão azul **Implantar**.
 5. Se o Google solicitar autorização, clique em **Revisar permissões**, selecione sua conta e autorize.
 6. Copie a **URL do app da Web** gerada (ela termina em `/exec`).
+
+> ⚠️ **IMPORTANTE - ATUALIZAR VERSÃO EXISTENTE:**
+> Se você já implantou o script anteriormente, para que a verificação de RE e bloqueio de múltiplos dispositivos funcione:
+> 1. Cole o novo código de [`scripts/google_sheets_integration.js`](./scripts/google_sheets_integration.js) no editor do Apps Script.
+> 2. Clique em **Implantar** > **Gerenciar implantações**.
+> 3. Clique no lápis ✏️ (**Editar**).
+> 4. No campo **Versão**, selecione **Nova versão** (*New version*).
+> 5. Clique em **Implantar**. A URL continuará a mesma, e as novas funções entrarão no ar imediatamente!
 
 ---
 

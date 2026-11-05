@@ -587,11 +587,29 @@ class SipatApp {
     }
 
     const feedbackNotice = document.getElementById('submit-notice-text');
+    const confirmBtn = document.getElementById('btn-confirm-final-send');
     if (feedbackNotice) {
-      if (completedCount < 6) {
+      if (window.gameState?.isSubmitted) {
+        feedbackNotice.innerHTML = `✅ <strong>Pontuação Já Enviada!</strong><br><em>Sua pontuação final de ${total} pontos já foi registrada com sucesso no banco de dados da Manserv. Não é permitida mais de uma tentativa por colaborador.</em>`;
+        if (confirmBtn) {
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = 'Pontuação Já Enviada ✅';
+          confirmBtn.classList.add('btn-disabled');
+        }
+      } else if (completedCount < 6) {
         feedbackNotice.innerHTML = `ℹ️ <em>Aviso: Você realizou ${completedCount} de 6 jogos. Não é obrigatório terminar todos; sua pontuação de ${total} pontos será registrada com sucesso! Você poderá retornar depois para somar mais pontos.</em>`;
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Confirmar Envio para o Banco de Dados 🚀';
+          confirmBtn.classList.remove('btn-disabled');
+        }
       } else {
         feedbackNotice.innerHTML = `🎉 <em>Sensacional! Você completou os 6 níveis da SIPAT Manserv 2026 com ${total} pontos!</em>`;
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Confirmar Envio para o Banco de Dados 🚀';
+          confirmBtn.classList.remove('btn-disabled');
+        }
       }
     }
 
@@ -657,18 +675,40 @@ class SipatApp {
       tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Carregando ranking...</td></tr>`;
     }
 
+    let leaderboardData = null;
+
     try {
       const res = await fetch('/api/leaderboard');
-      const data = await res.json();
-
-      if (!data || data.length === 0) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">Nenhum colaborador registrado ainda. Seja o primeiro!</td></tr>`;
-        return;
+      if (res.ok) {
+        leaderboardData = await res.json();
       }
+    } catch (err) {
+      // Server not reachable
+    }
 
+    // Cloud fallback for GitHub Pages: query Google Sheet Webhook
+    if (!leaderboardData) {
+      const webhookUrl = window.gameState?.webhookUrl || localStorage.getItem('sipat_webhook_url');
+      if (webhookUrl) {
+        try {
+          const sheetUrl = `${webhookUrl}${webhookUrl.includes('?') ? '&' : '?'}action=leaderboard&_t=${Date.now()}`;
+          const sheetRes = await fetch(sheetUrl);
+          if (sheetRes.ok) {
+            const sheetJson = await sheetRes.json();
+            if (sheetJson && sheetJson.leaderboard) {
+              leaderboardData = sheetJson.leaderboard;
+            }
+          }
+        } catch (e) {
+          console.warn('Google Sheet leaderboard fetch error:', e);
+        }
+      }
+    }
+
+    if (leaderboardData && leaderboardData.length > 0) {
       if (tbody) {
         const playerIdent = (window.gameState?.player.re || window.gameState?.player.email || '').toLowerCase();
-        tbody.innerHTML = data.map(item => {
+        tbody.innerHTML = leaderboardData.map(item => {
           let rankBadge = `${item.rank}º`;
           if (item.rank === 1) rankBadge = '🥇 1º';
           else if (item.rank === 2) rankBadge = '🥈 2º';
@@ -685,15 +725,17 @@ class SipatApp {
                 <br><small style="color: var(--color-primary); font-weight: 600;">RE: ${item.re || '-'}</small>
                 ${isCurrent ? ' <span class="you-badge">(Você)</span>' : ''}
               </td>
-              <td>${item.completedCount}/6</td>
-              <td class="text-right"><strong class="text-orange">${item.totalScore} pts</strong></td>
+              <td>${item.completedCount || 0}/6</td>
+              <td class="text-right"><strong class="text-orange">${item.totalScore || 0} pts</strong></td>
             </tr>
           `;
         }).join('');
       }
-    } catch (err) {
-      // Fallback for GitHub Pages or offline: read local history
-      const localHistory = JSON.parse(localStorage.getItem('sipat_history') || '[]');
+      return;
+    }
+
+    // Fallback for offline or empty: read local history
+    const localHistory = JSON.parse(localStorage.getItem('sipat_history') || '[]');
       if (localHistory.length > 0 && tbody) {
         const sorted = [...localHistory].sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
         const playerIdent = (window.gameState?.player.re || window.gameState?.player.email || '').toLowerCase();

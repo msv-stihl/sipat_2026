@@ -180,6 +180,11 @@ class GameState {
   }
 
   setGameScore(levelKey, score, isCompleted = false, details = null) {
+    if (this.isSubmitted) {
+      console.warn('Participação já finalizada para este RE. Alterações de pontuação bloqueadas.');
+      return;
+    }
+
     const max = this.maxPoints[levelKey] || 0;
     const clampedScore = Math.min(max, Math.max(0, Math.round(score)));
 
@@ -315,6 +320,13 @@ class GameState {
         body: JSON.stringify({ re: clean, sessionId })
       });
 
+      if (!res.ok) {
+        // If 404/502/etc (e.g. GitHub Pages or static host)
+        if (res.status === 404 || res.status === 405 || res.status === 502 || res.status === 503) {
+          return await this.fallbackValidateRe(clean, sessionId);
+        }
+      }
+
       const data = await res.json();
       if (res.ok && data.authorized) {
         this.setPlayer(data.re, data.name, data.sessionId || sessionId);
@@ -345,7 +357,7 @@ class GameState {
     }
   }
 
-  // Static/offline fallback validator reading data/employees.json
+  // Static/cloud fallback validator querying Google Sheet & data/employees.json
   async fallbackValidateRe(cleanRe, sessionId) {
     try {
       const res = await fetch('data/employees.json');
@@ -370,7 +382,109 @@ class GameState {
         }
 
         const isGeneric = (match.re || '').toUpperCase() === 'STIHL';
+        const webhookUrl = this.webhookUrl || localStorage.getItem('sipat_webhook_url');
+
+        // 1. Google Sheets Cloud Database Check (Source of Truth across all devices)
+        let remoteRecord = null;
+        if (webhookUrl) {
+          try {
+            const checkUrl = `${webhookUrl}${webhookUrl.includes('?') ? '&' : '?'}checkRe=${encodeURIComponent(match.re)}&sessionId=${encodeURIComponent(sessionId)}&_t=${Date.now()}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            const sheetResp = await fetch(checkUrl, {
+              method: 'GET',
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (sheetResp.ok) {
+              const sheetJson = await sheetResp.json();
+              if (sheetJson && sheetJson.exists && sheetJson.player) {
+                remoteRecord = sheetJson;
+              }
+            }
+          } catch (sheetErr) {
+            console.warn('Google Sheets cloud check failed or timed out:', sheetErr);
+          }
+        }
+
+        // If found in Google Sheets
+        if (remoteRecord) {
+          const p = remoteRecord.player;
+          const isSameSession = Boolean(remoteRecord.isSameSession || (sessionId && p.sessionId && p.sessionId === sessionId));
+
+          if (isGeneric) {
+            if (isSameSession) {
+              this.setPlayer(match.re, match.name, sessionId);
+              if (p.scores) {
+                for (const k of Object.keys(this.scores)) {
+                  if (p.scores[k] !== undefined) {
+                    this.scores[k] = Math.max(this.scores[k] || 0, p.scores[k]);
+                    if (this.scores[k] >= (this.maxPoints[k] || 0) * 0.7 || p.completedCount >= 6) {
+                      this.completed[k] = true;
+                    }
+                  }
+                }
+              }
+              if (p.status === 'completed' || p.completedCount >= 6) {
+                this.isSubmitted = true;
+              }
+              this.save();
+              return {
+                authorized: true,
+                isContinuing: true,
+                isGeneric: true,
+                isCompleted: this.isSubmitted,
+                re: match.re,
+                name: match.name,
+                sessionId,
+                player: p
+              };
+            }
+          } else {
+            // Standard RE
+            if (isSameSession) {
+              // Resuming on same device/session: restore scores and lock if completed
+              this.setPlayer(match.re, match.name, sessionId);
+              if (p.scores) {
+                for (const k of Object.keys(this.scores)) {
+                  if (p.scores[k] !== undefined) {
+                    this.scores[k] = Math.max(this.scores[k] || 0, p.scores[k]);
+                    if (this.scores[k] >= (this.maxPoints[k] || 0) * 0.7 || p.completedCount >= 6) {
+                      this.completed[k] = true;
+                    }
+                  }
+                }
+              }
+              if (p.status === 'completed' || p.completedCount >= 6) {
+                this.isSubmitted = true;
+              }
+              this.save();
+              return {
+                authorized: true,
+                isContinuing: true,
+                isCompleted: this.isSubmitted,
+                re: match.re,
+                name: match.name,
+                sessionId,
+                player: p
+              };
+            } else {
+              // DIFFERENT DEVICE / DIFFERENT SESSION:
+              // Block duplicate attempt!
+              return {
+                authorized: false,
+                alreadyRegistered: true,
+                re: match.re,
+                name: match.name,
+                error: `Acesso bloqueado: O RE ${match.re} (${match.name}) já enviou sua pontuação neste ou em outro dispositivo. Não é permitida mais de uma tentativa por colaborador.`
+              };
+            }
+          }
+        }
+
+        // 2. Local fallback check in localStorage (sipat_history)
         const history = JSON.parse(localStorage.getItem('sipat_history') || '[]');
+        const normMatchRe = (match.re || '').replace(/^0+/, '') || '0';
 
         if (isGeneric) {
           const existingSession = history.find(p => (p.re || '').toUpperCase() === 'STIHL' && p.sessionId === sessionId);
@@ -380,14 +494,21 @@ class GameState {
               for (const k of Object.keys(this.scores)) {
                 if (existingSession.scores[k] !== undefined) {
                   this.scores[k] = Math.max(this.scores[k] || 0, existingSession.scores[k]);
+                  if (this.scores[k] >= (this.maxPoints[k] || 0) * 0.7 || existingSession.completedCount >= 6) {
+                    this.completed[k] = true;
+                  }
                 }
               }
+            }
+            if (existingSession.status === 'completed' || existingSession.isSubmitted) {
+              this.isSubmitted = true;
             }
             this.save();
             return {
               authorized: true,
               isContinuing: true,
               isGeneric: true,
+              isCompleted: this.isSubmitted,
               re: match.re,
               name: match.name,
               sessionId
@@ -407,7 +528,11 @@ class GameState {
           };
         }
 
-        const existing = history.find(p => p.re && p.re.toUpperCase() === match.re.toUpperCase());
+        const existing = history.find(p => {
+          if (!p.re) return false;
+          const pNorm = (p.re || '').replace(/^0+/, '') || '0';
+          return (p.re.toUpperCase() === match.re.toUpperCase() || pNorm === normMatchRe);
+        });
 
         if (existing) {
           if (existing.sessionId && existing.sessionId === sessionId) {
@@ -416,13 +541,20 @@ class GameState {
               for (const k of Object.keys(this.scores)) {
                 if (existing.scores[k] !== undefined) {
                   this.scores[k] = Math.max(this.scores[k] || 0, existing.scores[k]);
+                  if (this.scores[k] >= (this.maxPoints[k] || 0) * 0.7 || existing.completedCount >= 6) {
+                    this.completed[k] = true;
+                  }
                 }
               }
+            }
+            if (existing.status === 'completed' || existing.isSubmitted) {
+              this.isSubmitted = true;
             }
             this.save();
             return {
               authorized: true,
               isContinuing: true,
+              isCompleted: this.isSubmitted,
               re: match.re,
               name: match.name,
               sessionId
