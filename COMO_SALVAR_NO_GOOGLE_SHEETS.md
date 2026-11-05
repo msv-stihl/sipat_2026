@@ -59,3 +59,4 @@ Você tem duas formas simples de conectar:
 ## 🎯 O que acontece a partir daí?
 - Toda vez que qualquer colaborador jogar qualquer um dos 6 jogos ou clicar em "Salvar Pontuação", uma linha com o **RE**, **Nome**, **Setor**, **Notas de cada jogo** e **Total** será preenchida ou atualizada automaticamente na planilha.
 - Você pode acompanhar tudo ao vivo pelo seu celular ou computador!
+

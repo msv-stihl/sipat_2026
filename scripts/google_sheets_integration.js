@@ -6,24 +6,31 @@
  * Este script recebe as pontuações e respostas de cada colaborador enviadas do
  * site da SIPAT (computador ou celular) e registra ou atualiza na sua planilha!
  * 
- * COMO USAR (Leva apenas 1 minuto):
- * 1. Abra o Google Drive e crie uma Planilha em branco (ex: "Resultados SIPAT Manserv 2026").
- * 2. No menu superior da planilha, clique em: Extensões > Apps Script.
- * 3. Apague todo o código que estiver lá e cole EXATAMENTE o código abaixo.
- * 4. Clique no botão azul no topo: "Implantar" (ou "Deploy") > "Nova implantação".
- * 5. Na engrenagem ao lado de "Selecionar tipo", escolha: "App da Web" (Web app).
- * 6. Configure:
- *    - Descrição: "SIPAT 2026"
- *    - Executar como: "Eu" (seu e-mail)
- *    - Quem pode acessar: "Qualquer pessoa" (Anyone) -> ESSENCIAL para os celulares salvarem!
- * 7. Clique em "Implantar". Autorize o acesso com sua conta Google.
- * 8. Copie a "URL do app da Web" gerada (termina com /exec).
- * 9. Cole essa URL no painel Admin do site (ou nos envie para colocar no data/config.json).
- * 
- * Pronto! Cada jogo concluído atualizará automaticamente a linha do colaborador na planilha!
+ * VANTAGENS:
+ * - Linha ÚNICA por colaborador: Se o mesmo RE enviar novamente, a linha dele é ATUALIZADA
+ *   com a maior pontuação em vez de criar linhas duplicadas.
+ * - Suporte a zeros à esquerda no RE (ex: 028885).
+ * - Acesso genérico STIHL suporta múltiplos colaboradores independentes.
  */
 
+function cleanRe(val) {
+  if (val === null || val === undefined) return "";
+  var s = String(val).trim().toUpperCase();
+  s = s.replace(/^'/, ""); // Remove apóstrofo se houver
+  // Se for numérico, remove zeros à esquerda para comparação 100% precisa (028885 == 28885)
+  if (/^\d+$/.test(s)) {
+    return s.replace(/^0+/, "") || "0";
+  }
+  return s;
+}
+
 function doPost(e) {
+  // Trava para evitar concorrência simultânea escrevendo na mesma célula
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000); // aguarda até 10s para obter a trava
+  } catch (t) {}
+
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getActiveSheet();
@@ -47,42 +54,45 @@ function doPost(e) {
         "ID da Sessão"
       ]);
       
-      // Estilização do cabeçalho oficial Manserv
       var headerRange = sheet.getRange(1, 1, 1, 14);
       headerRange.setBackground("#FF460A");
       headerRange.setFontColor("#FFFFFF");
       headerRange.setFontWeight("bold");
       headerRange.setHorizontalAlignment("center");
       sheet.setFrozenRows(1);
+
+      // Formata a coluna A (RE) como texto puro para nunca cortar os zeros à esquerda
+      sheet.getRange("A:A").setNumberFormat("@");
     }
     
     // Extrai os dados enviados pelo site
     var raw = e.postData.contents;
     var data = JSON.parse(raw);
     var scores = data.scores || {};
-    var re = String(data.re || data.email || "").trim();
+    var rawRe = String(data.re || data.email || "").trim();
+    var normalizedRe = cleanRe(rawRe);
     var sessionId = String(data.sessionId || "").trim();
-    var isGeneric = (re.toUpperCase() === "STIHL");
+    var isGeneric = (normalizedRe === "STIHL");
     
     var lastRow = sheet.getLastRow();
     var targetRow = -1;
     
-    // Procura se o colaborador já possui uma linha na planilha (para atualizar em vez de duplicar)
+    // Procura se o colaborador já possui uma linha na planilha para ATUALIZAR
     if (lastRow > 1) {
       var values = sheet.getRange(2, 1, lastRow - 1, 14).getValues();
       for (var i = 0; i < values.length; i++) {
-        var rowRe = String(values[i][0]).trim();
+        var rowRe = cleanRe(values[i][0]);
         var rowSession = String(values[i][13]).trim();
         
         if (isGeneric) {
           // STIHL é genérico: atualiza pelo ID da sessão
-          if (rowRe.toUpperCase() === "STIHL" && rowSession === sessionId) {
+          if (rowRe === "STIHL" && rowSession === sessionId) {
             targetRow = i + 2;
             break;
           }
         } else {
-          // RE padrão: atualiza a linha do próprio RE
-          if (rowRe.toUpperCase() === re.toUpperCase()) {
+          // RE padrão: compara de forma normalizada (028885 == 28885)
+          if (rowRe === normalizedRe) {
             targetRow = i + 2;
             break;
           }
@@ -93,7 +103,7 @@ function doPost(e) {
     var timestamp = Utilities.formatDate(new Date(), "America/Sao_Paulo", "dd/MM/yyyy HH:mm:ss");
     
     var rowData = [
-      re,
+      "'" + rawRe, // Força texto com apóstrofo para manter os zeros à esquerda no Excel/Sheets
       data.name || "Colaborador",
       data.sector || (isGeneric ? "STIHL" : "Manserv"),
       Number(scores.level1 || 0),
@@ -104,24 +114,28 @@ function doPost(e) {
       Number(scores.level6 || 0),
       Number(data.totalScore || 0),
       Number(data.completedCount || 0),
-      data.status || "in_progress",
+      data.status || "completed",
       timestamp,
       sessionId
     ];
     
     if (targetRow > 0) {
-      // Atualiza pontuações da linha existente
+      // Atualiza a linha existente do colaborador (sem criar novas linhas)
       sheet.getRange(targetRow, 1, 1, 14).setValues([rowData]);
     } else {
-      // Adiciona novo colaborador
+      // Adiciona uma única linha nova
       sheet.appendRow(rowData);
     }
     
-    return ContentService.createTextOutput(JSON.stringify({ result: "success", re: re }))
+    return ContentService.createTextOutput(JSON.stringify({ result: "success", re: rawRe, updatedRow: targetRow }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ result: "error", message: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch (l) {}
   }
 }
 

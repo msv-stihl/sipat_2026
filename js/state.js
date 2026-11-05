@@ -258,9 +258,9 @@ class GameState {
     // Always keep a local copy in browser
     this.saveLocalRecord(payload);
 
-    // Direct client webhook dispatch if configured (e.g. Google Sheets on GitHub Pages)
+    // Direct client webhook dispatch if configured (only on final submission or full completion to avoid spamming rows)
     const customWebhook = this.webhookUrl || localStorage.getItem('sipat_webhook_url');
-    if (customWebhook) {
+    if (customWebhook && (isFinalSubmission || this.getCompletedCount() >= 6)) {
       try {
         fetch(customWebhook, {
           method: 'POST',
